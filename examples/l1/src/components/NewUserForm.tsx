@@ -1,5 +1,13 @@
-import { useState } from 'react';
+import { useState } from "react";
 
+/**
+ * Props for the NewUserForm component
+ *
+ * Note: In a production application, this form would ideally be generated
+ * dynamically based on the schema from /api/onboarding-schema.
+ * For this demo, we're using a simplified hardcoded form with the
+ * minimum required fields.
+ */
 interface NewUserFormProps {
   userData: {
     firstName: string;
