@@ -42,7 +42,11 @@ export default function SdkTestPage() {
   const [keyringZKPG, setKeyringZKPG] = useState<KeyringZKPG | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [isPending, setIsPending] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isFetchingPolicies, setIsFetchingPolicies] = useState(false);
+  const [isFetchingUsers, setIsFetchingUsers] = useState(false);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -60,10 +64,17 @@ export default function SdkTestPage() {
     null
   );
 
+  const isPending =
+    isFetchingPolicies ||
+    isFetchingUsers ||
+    isCreatingUser ||
+    isValidating ||
+    isGenerating;
+
   // Step 1: Fetch policies
   const fetchPolicies = async () => {
     try {
-      setIsPending(true);
+      setIsFetchingPolicies(true);
       const response = await axios.get("/api/policies");
       setPolicies(response.data.results || []);
 
@@ -74,27 +85,27 @@ export default function SdkTestPage() {
     } catch (err: any) {
       setError(`Error fetching policies: ${err.message}`);
     } finally {
-      setIsPending(false);
+      setIsFetchingPolicies(false);
     }
   };
 
   // Fetch all users
   const fetchUsers = async () => {
     try {
-      setIsPending(true);
+      setIsFetchingUsers(true);
       const response = await axios.get("/api/users");
       setAllUsers(response.data.results || []);
     } catch (err: any) {
       setError(`Error fetching users: ${err.message}`);
     } finally {
-      setIsPending(false);
+      setIsFetchingUsers(false);
     }
   };
 
   // Step 2: Create a user
   const createUser = async () => {
     try {
-      setIsPending(true);
+      setIsCreatingUser(true);
       const response = await axios.post("/api/users", userData);
       setUser(response.data);
 
@@ -106,7 +117,7 @@ export default function SdkTestPage() {
       setError(`Error creating user: ${err.message}`);
       return null;
     } finally {
-      setIsPending(false);
+      setIsCreatingUser(false);
     }
   };
 
@@ -118,7 +129,7 @@ export default function SdkTestPage() {
     }
 
     try {
-      setIsPending(true);
+      setIsValidating(true);
       const response = await axios.post("/api/validate-data", {
         userId: user.id,
         policyId: selectedPolicy.id,
@@ -136,7 +147,7 @@ export default function SdkTestPage() {
       setError(`Error validating data: ${err.message}`);
       return false;
     } finally {
-      setIsPending(false);
+      setIsValidating(false);
     }
   };
 
@@ -163,7 +174,7 @@ export default function SdkTestPage() {
       return;
     }
 
-    setIsPending(true);
+    setIsGenerating(true);
     setCalldata(null);
 
     try {
@@ -216,7 +227,7 @@ export default function SdkTestPage() {
           (e.response?.data?.error || e.message || "Unknown error")
       );
     } finally {
-      setIsPending(false);
+      setIsGenerating(false);
     }
   };
 
@@ -293,7 +304,7 @@ export default function SdkTestPage() {
           <p className="p-2 bg-gray-100 rounded">{status || "Unknown"}</p>
 
           <button
-            className="mt-2 bg-green-500 text-white p-2 rounded"
+            className="mt-2 bg-green-500 text-white p-2 rounded cursor-pointer"
             onClick={getKeyringZKPGStatus}
           >
             Get Keyring ZKPG Status
@@ -329,19 +340,19 @@ export default function SdkTestPage() {
       <div className="mb-6 space-y-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <button
-            className="bg-indigo-500 text-white p-2 rounded"
+            className="bg-indigo-500 text-white p-2 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={validateUserData}
             disabled={isPending || !user || !selectedPolicy}
           >
-            Validate Data
+            {isValidating ? "Validating..." : "Validate Data"}
           </button>
 
           <button
-            className="bg-indigo-500 text-white p-2 rounded"
+            className="bg-indigo-500 text-white p-2 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={generateCredentialUpdateCalldata}
             disabled={isPending}
           >
-            Generate Credential
+            {isGenerating ? "Generating..." : "Generate Credential"}
           </button>
         </div>
       </div>
