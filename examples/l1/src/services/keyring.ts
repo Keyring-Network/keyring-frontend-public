@@ -5,8 +5,8 @@ import {
   Policy,
   User,
   ValidateDataResponse,
-} from '@/types';
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+} from "@/types";
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
 export class KeyringClient {
   private static instance: KeyringClient;
@@ -17,14 +17,14 @@ export class KeyringClient {
    */
   constructor() {
     if (!process.env.KEYRING_API_URL || !process.env.KEYRING_API_KEY) {
-      throw new Error('KEYRING_API_URL and KEYRING_API_KEY must be set');
+      throw new Error("KEYRING_API_URL and KEYRING_API_KEY must be set");
     }
 
     this.client = axios.create({
       baseURL: process.env.KEYRING_API_URL,
       headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': process.env.KEYRING_API_KEY,
+        "Content-Type": "application/json",
+        "X-API-KEY": process.env.KEYRING_API_KEY,
       },
     });
 
@@ -33,7 +33,7 @@ export class KeyringClient {
       (response) => response,
       (error) => {
         console.error(
-          'Keyring API Error:',
+          "Keyring API Error:",
           error.response?.data || error.message
         );
         return Promise.reject(error);
@@ -82,7 +82,7 @@ export class KeyringClient {
     firstName: string,
     lastName: string
   ): Promise<User> {
-    const response = await this.client.post<User>('/api/l1/users', {
+    const response = await this.client.post<User>("/api/l1/users", {
       email,
       first_name: firstName,
       last_name: lastName,
@@ -117,7 +117,7 @@ export class KeyringClient {
   async validateData(
     userId: string,
     policyId: string,
-    data: Record<string, any>
+    data: Record<string, unknown>
   ): Promise<ValidateDataResponse> {
     const response = await this.client.post<ValidateDataResponse>(
       `/api/l1/users/${userId}/policies/${policyId}/validate-data`,
@@ -147,9 +147,7 @@ export class KeyringClient {
   /**
    * Generic method to make custom requests to the API
    */
-  async request<T = any>(
-    config: AxiosRequestConfig
-  ): Promise<AxiosResponse<T>> {
+  async request<T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     return this.client.request<T>(config);
   }
 }

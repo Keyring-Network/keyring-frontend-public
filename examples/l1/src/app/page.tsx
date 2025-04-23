@@ -59,7 +59,10 @@ export default function SdkTestPage() {
     lastName: "Last Name",
     email: `test-${Date.now()}@example.com`,
   });
-  const [validationResult, setValidationResult] = useState<any>(null);
+  const [validationResult, setValidationResult] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [calldata, setCalldata] = useState<CredentialUpdateCalldata | null>(
     null
   );
@@ -82,8 +85,9 @@ export default function SdkTestPage() {
       if (response.data.results && response.data.results.length > 0) {
         setSelectedPolicy(response.data.results[0]);
       }
-    } catch (err: any) {
-      setError(`Error fetching policies: ${err.message}`);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(`Error fetching policies: ${errorMessage}`);
     } finally {
       setIsFetchingPolicies(false);
     }
@@ -95,8 +99,9 @@ export default function SdkTestPage() {
       setIsFetchingUsers(true);
       const response = await axios.get("/api/users");
       setAllUsers(response.data.results || []);
-    } catch (err: any) {
-      setError(`Error fetching users: ${err.message}`);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(`Error fetching users: ${errorMessage}`);
     } finally {
       setIsFetchingUsers(false);
     }
@@ -113,8 +118,9 @@ export default function SdkTestPage() {
       setAllUsers((prev) => [...prev, response.data]);
 
       return response.data;
-    } catch (err: any) {
-      setError(`Error creating user: ${err.message}`);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(`Error creating user: ${errorMessage}`);
       return null;
     } finally {
       setIsCreatingUser(false);
@@ -143,8 +149,9 @@ export default function SdkTestPage() {
 
       setValidationResult(response.data);
       return response.data.valid;
-    } catch (err: any) {
-      setError(`Error validating data: ${err.message}`);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(`Error validating data: ${errorMessage}`);
       return false;
     } finally {
       setIsValidating(false);
@@ -221,11 +228,12 @@ export default function SdkTestPage() {
       );
 
       setCalldata(calldata);
-    } catch (e: any) {
-      setError(
-        "Error Creating Credential Update Calldata: " +
-          (e.response?.data?.error || e.message || "Unknown error")
-      );
+    } catch (e: Error | unknown) {
+      const errorResponse = e as { response?: { data?: { error?: string } } };
+      const errorMessage =
+        errorResponse.response?.data?.error ||
+        (e instanceof Error ? e.message : "Unknown error");
+      setError("Error Creating Credential Update Calldata: " + errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -239,8 +247,10 @@ export default function SdkTestPage() {
           debug: true,
         });
         setKeyringZKPG(keyringZKPG);
-      } catch (err: any) {
-        setError(err.message || "Unknown error");
+      } catch (err: Error | unknown) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
       }
     };
 
