@@ -6,7 +6,7 @@
     "dev": "rollup -c -w",
     "lint": "eslint .",
     "clean": "rm -rf dist",
-    "publish": "pnpm build && npm publish"
+    "release": "pnpm build && npm publish"
   },
   "dependencies": {
     "@keyringnetwork/circuits": "3.0.2",
