@@ -11,8 +11,8 @@ importers:
   examples/l1:
     dependencies:
       '@iden3/js-crypto':
-        specifier: 1.0.0-beta.0
-        version: 1.0.0-beta.0
+        specifier: 1.1.0
+        version: 1.1.0
       '@keyringnetwork/circuits':
         specifier: 3.0.2
         version: 3.0.2
@@ -328,17 +328,8 @@ packages:
       ffjavascript: 0.3.1
     dev: false
 
-  /@iden3/js-crypto@1.0.0-beta.0:
-    resolution: {integrity: sha512-T+aC/MInoAPhutGTSCIUN7dwSS72C4QrXF0Cjd5OlQdlv7HpamFRo4ma+trMGSIwgCvhmjDrslP4uhSMxWLYww==}
-    dependencies:
-      blake-hash: 2.0.0
-      ffjavascript: 0.2.63
-    dev: false
-
-  /@iden3/js-crypto@1.3.0:
-    resolution: {integrity: sha512-kU0Omlm6P0O0MXGYE2ejTP+bgMMNzam7OfJbGbyu0NgfPag+6LThISmm8JYSc7VsoXtEVgC4s3zxg3hOenX0tA==}
-    dependencies:
-      '@noble/hashes': 1.8.0
+  /@iden3/js-crypto@1.1.0:
+    resolution: {integrity: sha512-MbL7OpOxBoCybAPoorxrp+fwjDVESyDe6giIWxErjEIJy0Q2n1DU4VmKh4vDoCyhJx/RdVgT8Dkb59lKwISqsw==}
     dev: false
 
   /@img/sharp-darwin-arm64@0.34.1:
@@ -538,7 +529,7 @@ packages:
       '@ethersproject/keccak256': 5.8.0
       '@frozenfire/circom-common': 0.7.0
       '@frozenfire/circom-witness': 0.6.2
-      '@iden3/js-crypto': 1.3.0
+      '@iden3/js-crypto': 1.1.0
       bigint-crypto-utils: 3.3.0
       ffjavascript: 0.3.1
       merkletreejs: 0.3.11
@@ -2308,16 +2299,6 @@ packages:
     resolution: {integrity: sha512-EM7aMFTXbptt/wZdMlBv2t8IViwQL+h6SLHosp8Yf0dqJMTnY6iL32opnAB6kAdL0SZPuvcAzFr31o0c/R3/RA==}
     dev: false
 
-  /blake-hash@2.0.0:
-    resolution: {integrity: sha512-Igj8YowDu1PRkRsxZA7NVkdFNxH5rKv5cpLxQ0CVXSIA77pVYwCPRQJ2sMew/oneUpfuYRyjG6r8SmmmnbZb1w==}
-    engines: {node: '>= 10'}
-    requiresBuild: true
-    dependencies:
-      node-addon-api: 3.2.1
-      node-gyp-build: 4.8.4
-      readable-stream: 3.6.2
-    dev: false
-
   /blake2b-wasm@2.4.0:
     resolution: {integrity: sha512-S1kwmW2ZhZFFFOghcx73+ZajEfKBqhP82JMssxtLVMxlaPea1p9uoLiUZ5WYyHn0KddwbLc+0vh4wR0KBNoT5w==}
     dependencies:
@@ -3363,14 +3344,6 @@ packages:
       picomatch: 4.0.2
     dev: true
 
-  /ffjavascript@0.2.63:
-    resolution: {integrity: sha512-dBgdsfGks58b66JnUZeZpGxdMIDQ4QsD3VYlRJyFVrKQHb2kJy4R2gufx5oetrTxXPT+aEjg0dOvOLg1N0on4A==}
-    dependencies:
-      wasmbuilder: 0.0.16
-      wasmcurves: 0.2.2
-      web-worker: 1.2.0
-    dev: false
-
   /ffjavascript@0.3.0:
     resolution: {integrity: sha512-l7sR5kmU3gRwDy8g0Z2tYBXy5ttmafRPFOqY7S6af5cq51JqJWt5eQ/lSR/rs2wQNbDYaYlQr5O+OSUf/oMLoQ==}
     dependencies:
@@ -4369,10 +4342,6 @@ packages:
 
   /node-addon-api@2.0.2:
     resolution: {integrity: sha512-Ntyt4AIXyaLIuMHF6IOoTakB3K+RWxwtsHNRxllEoA6vPwP9o4866g6YWDLUdnucilZhmkxiHwHr11gAENw+QA==}
-    dev: false
-
-  /node-addon-api@3.2.1:
-    resolution: {integrity: sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==}
     dev: false
 
   /node-fetch-native@1.6.6:
