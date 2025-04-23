@@ -1,0 +1,1 @@
+// /api/l1/onboarding-schema
