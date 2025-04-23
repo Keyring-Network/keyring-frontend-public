@@ -17,12 +17,12 @@ NEXT_PUBLIC_ALCHEMY_API_KEY=https://eth-mainnet.g.alchemy.com/v2/...
 pnpm install && pnpm dev
 ```
 
-## Important Dependencies
+## Required Dependencies
 
 ```js
 "@iden3/js-crypto": "1.1.0",
 "@keyringnetwork/circuits": "3.0.2",
-"@keyringnetwork/frontend-sdk-temp": "0.0.7",
+"@keyringnetwork/keyring-zkpg-sdk": "^0.1.0",
 "ffjavascript": "^0.3.1",
 "snarkjs": "0.7.5",
 ```

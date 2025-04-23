@@ -11,7 +11,7 @@ import { BlindedSignatureResponse, Policy, User } from "@/types";
 import {
   CredentialUpdateCalldata,
   KeyringZKPG,
-} from "@keyringnetwork/frontend-sdk-temp";
+} from "@keyringnetwork/keyring-zkpg-sdk";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { mainnet } from "viem/chains";

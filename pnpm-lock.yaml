@@ -16,9 +16,9 @@ importers:
       '@keyringnetwork/circuits':
         specifier: 3.0.2
         version: 3.0.2
-      '@keyringnetwork/frontend-sdk-temp':
-        specifier: 0.0.7
-        version: 0.0.7(typescript@5.8.3)
+      '@keyringnetwork/keyring-zkpg-sdk':
+        specifier: ^0.1.0
+        version: 0.1.0(typescript@5.8.3)
       '@tanstack/react-query':
         specifier: ^5.29.0
         version: 5.74.4(react@19.1.0)
@@ -535,9 +535,10 @@ packages:
       merkletreejs: 0.3.11
     dev: false
 
-  /@keyringnetwork/frontend-sdk-temp@0.0.7(typescript@5.8.3):
-    resolution: {integrity: sha512-qAzoGpscBV8tRqw95mUPMe2K3rcllT3sjhGg9wXfb6NMbkl99aJpY9SMMJuyiWpjFupmieuY/m356Lp9VBYufQ==}
+  /@keyringnetwork/keyring-zkpg-sdk@0.1.0(typescript@5.8.3):
+    resolution: {integrity: sha512-izelcE0g5Cm/XdmKyauz/EFlfODnu5UAcN2T6uG3pa6er29VoH19FHtcXXdCEewbCz3MdEuN0+p0L0aN57nuXA==}
     dependencies:
+      '@keyringnetwork/circuits': 3.0.2
       axios: 1.8.4
       viem: 2.28.0(typescript@5.8.3)
     transitivePeerDependencies:
