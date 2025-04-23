@@ -1,6 +1,6 @@
 {
-  "name": "@keyringnetwork/frontend-sdk-temp",
-  "version": "0.0.7",
+  "name": "@keyringnetwork/keyring-zkpg-sdk",
+  "version": "0.1.0",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
