@@ -1,0 +1,40 @@
+{
+  "name": "@keyringnetwork/keyring-zkpg-sdk",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "lint": "eslint .",
+    "clean": "rm -rf dist",
+    "release": "pnpm build && npm publish"
+  },
+  "dependencies": {
+    "@keyringnetwork/circuits": "3.0.2",
+    "axios": "^1.7.7",
+    "viem": "^2.21.44"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@turbo/gen": "^1.10.12",
+    "@types/node": "^20.5.2",
+    "@types/react": "18.2.0",
+    "react": "18.2.0",
+    "rollup": "^4.9.6",
+    "rollup-plugin-dts": "^6.1.0",
+    "typescript": "^5.0.4"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  }
+}
