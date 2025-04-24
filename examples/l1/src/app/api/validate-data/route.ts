@@ -1,10 +1,10 @@
-import keyringClient from '@/services/keyring';
-import { NextRequest, NextResponse } from 'next/server';
+import keyringClient from "@/services/keyring";
+import { NextRequest, NextResponse } from "next/server";
 
 export interface ValidateDataRequestBody {
   userId: string;
   policyId: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export async function POST(request: NextRequest) {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !policyId || !data) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
@@ -25,10 +25,16 @@ export async function POST(request: NextRequest) {
       data
     );
     return NextResponse.json(validationResult);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorResponse = error as {
+      response?: { data?: { detail?: string }; status?: number };
+    };
     return NextResponse.json(
-      { error: error.response?.data?.detail || 'Failed to validate data' },
-      { status: error.response?.status || 500 }
+      {
+        error:
+          errorResponse.response?.data?.detail || "Failed to validate data",
+      },
+      { status: errorResponse.response?.status || 500 }
     );
   }
 }

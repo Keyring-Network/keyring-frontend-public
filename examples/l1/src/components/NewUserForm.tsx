@@ -1,5 +1,13 @@
-import { useState } from 'react';
+import { useState } from "react";
 
+/**
+ * Props for the NewUserForm component
+ *
+ * Note: In a production application, this form would ideally be generated
+ * dynamically based on the schema from /api/onboarding-schema.
+ * For this demo, we're using a simplified hardcoded form with the
+ * minimum required fields.
+ */
 interface NewUserFormProps {
   userData: {
     firstName: string;
@@ -31,10 +39,10 @@ export const NewUserForm = ({
   return (
     <>
       <button
-        className="bg-blue-500 text-white p-2 rounded w-full"
+        className="bg-blue-500 text-white p-2 rounded w-full cursor-pointer"
         onClick={() => setShowNewUserForm(!showNewUserForm)}
       >
-        {showNewUserForm ? 'Hide New User Form' : 'Create New User'}
+        {showNewUserForm ? "Hide New User Form" : "Create New User"}
       </button>
 
       {showNewUserForm && (
@@ -68,11 +76,11 @@ export const NewUserForm = ({
             className="p-2 border rounded w-full"
           />
           <button
-            className="bg-green-500 text-white p-2 rounded w-full"
+            className="bg-green-500 text-white p-2 rounded w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleCreateUser}
             disabled={isPending}
           >
-            Create User
+            {isPending ? "Creating..." : "Create User"}
           </button>
         </div>
       )}

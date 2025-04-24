@@ -1,5 +1,5 @@
-import keyringClient from '@/services/keyring';
-import { NextRequest, NextResponse } from 'next/server';
+import keyringClient from "@/services/keyring";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId || !proof || !publicSignals || !policyId) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
@@ -19,13 +19,17 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorResponse = error as {
+      response?: { data?: { detail?: string }; status?: number };
+    };
     return NextResponse.json(
       {
         error:
-          error.response?.data?.detail || 'Failed to get blinded signature',
+          errorResponse.response?.data?.detail ||
+          "Failed to get blinded signature",
       },
-      { status: error.response?.status || 500 }
+      { status: errorResponse.response?.status || 500 }
     );
   }
 }

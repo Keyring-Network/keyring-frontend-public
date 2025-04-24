@@ -1,5 +1,5 @@
-import keyringClient from '@/services/keyring';
-import { NextRequest, NextResponse } from 'next/server';
+import keyringClient from "@/services/keyring";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,17 +8,20 @@ export async function POST(request: NextRequest) {
 
     if (!email || !firstName || !lastName) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
     const user = await keyringClient.createUser(email, firstName, lastName);
     return NextResponse.json(user);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorResponse = error as {
+      response?: { data?: { error?: string }; status?: number };
+    };
     return NextResponse.json(
-      { error: error.response?.data?.error || 'Failed to create user' },
-      { status: error.response?.status || 500 }
+      { error: errorResponse.response?.data?.error || "Failed to create user" },
+      { status: errorResponse.response?.status || 500 }
     );
   }
 }
@@ -26,15 +29,18 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('page_size') || '100');
+    const page = parseInt(searchParams.get("page") || "1");
+    const pageSize = parseInt(searchParams.get("page_size") || "100");
 
     const users = await keyringClient.getUsers(page, pageSize);
     return NextResponse.json(users);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorResponse = error as {
+      response?: { data?: { detail?: string }; status?: number };
+    };
     return NextResponse.json(
-      { error: error.response?.data?.detail || 'Failed to get users' },
-      { status: error.response?.status || 500 }
+      { error: errorResponse.response?.data?.detail || "Failed to get users" },
+      { status: errorResponse.response?.status || 500 }
     );
   }
 }

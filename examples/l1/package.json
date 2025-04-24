@@ -9,9 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@iden3/js-crypto": "1.0.0-beta.0",
+    "@iden3/js-crypto": "1.1.0",
     "@keyringnetwork/circuits": "3.0.2",
-    "@keyringnetwork/frontend-sdk-temp": "0.0.7",
+    "@keyringnetwork/keyring-zkpg-sdk": "^0.1.0",
     "@tanstack/react-query": "^5.29.0",
     "axios": "^1.8.4",
     "ffjavascript": "^0.3.1",

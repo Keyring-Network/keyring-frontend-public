@@ -39,7 +39,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface BlindedSignatureRequest {
-  proof: any;
+  proof: unknown;
   public_signals: string[];
 }
 
@@ -48,7 +48,7 @@ export interface BlindedSignatureResponse {
 }
 
 export interface ValidateDataRequest {
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export interface ValidateDataResponse {

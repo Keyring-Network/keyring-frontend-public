@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import { CredentialUpdateCalldata } from '@keyringnetwork/frontend-sdk-temp';
-import { useState } from 'react';
-import { mainnet } from 'viem/chains';
-import { useSimulateContract } from 'wagmi';
+import { CredentialUpdateCalldata } from "@keyringnetwork/keyring-zkpg-sdk";
+import { useState } from "react";
+import { mainnet } from "viem/chains";
+import { useSimulateContract } from "wagmi";
 
 const CREDENTIAL_UPDATE_CONTRACT_ABI = [
   {
     inputs: [
       {
-        internalType: 'address',
-        name: 'tradingAddress',
-        type: 'address',
+        internalType: "address",
+        name: "tradingAddress",
+        type: "address",
       },
-      { internalType: 'uint256', name: 'policyId', type: 'uint256' },
-      { internalType: 'uint256', name: 'chainId', type: 'uint256' },
-      { internalType: 'uint256', name: 'validUntil', type: 'uint256' },
-      { internalType: 'uint256', name: 'cost', type: 'uint256' },
-      { internalType: 'bytes', name: 'key', type: 'bytes' },
-      { internalType: 'bytes', name: 'signature', type: 'bytes' },
-      { internalType: 'bytes', name: 'backdoor', type: 'bytes' },
+      { internalType: "uint256", name: "policyId", type: "uint256" },
+      { internalType: "uint256", name: "chainId", type: "uint256" },
+      { internalType: "uint256", name: "validUntil", type: "uint256" },
+      { internalType: "uint256", name: "cost", type: "uint256" },
+      { internalType: "bytes", name: "key", type: "bytes" },
+      { internalType: "bytes", name: "signature", type: "bytes" },
+      { internalType: "bytes", name: "backdoor", type: "bytes" },
     ],
-    name: 'createCredential',
+    name: "createCredential",
     outputs: [],
-    stateMutability: 'payable',
-    type: 'function',
+    stateMutability: "payable",
+    type: "function",
   },
 ];
 
@@ -46,7 +46,7 @@ export const SimulateCredentialUpdate = ({
       .NEXT_PUBLIC_KEYRING_DEV_MAINNET_ADDRESS as `0x${string}`,
     chainId: mainnet.id,
     abi: CREDENTIAL_UPDATE_CONTRACT_ABI,
-    functionName: 'createCredential',
+    functionName: "createCredential",
     value: BigInt(calldata.cost),
     args: [
       calldata.trader,
@@ -85,8 +85,8 @@ export const SimulateCredentialUpdate = ({
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300"
         >
           {shouldSimulate && !isError
-            ? 'Simulating...'
-            : 'Simulate Transaction'}
+            ? "Simulating..."
+            : "Simulate Transaction"}
         </button>
 
         {shouldSimulate && !isPending && (
@@ -109,7 +109,7 @@ export const SimulateCredentialUpdate = ({
                 Simulation Failed
               </h3>
               <p className="text-red-600">
-                {failureReason?.message || 'Unknown error occurred'}
+                {failureReason?.message || "Unknown error occurred"}
               </p>
             </div>
           ) : simulatedData ? (
@@ -121,7 +121,7 @@ export const SimulateCredentialUpdate = ({
                 {JSON.stringify(
                   simulatedData,
                   (key, value) =>
-                    typeof value === 'bigint' ? value.toString() : value,
+                    typeof value === "bigint" ? value.toString() : value,
                   2
                 )}
               </pre>
@@ -131,4 +131,4 @@ export const SimulateCredentialUpdate = ({
       )}
     </div>
   );
-}
+};
