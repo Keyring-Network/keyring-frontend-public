@@ -4,6 +4,8 @@ import {
   PaginatedResponse,
   Policy,
   User,
+  UserStatus,
+  ValidateDataRequest,
   ValidateDataResponse,
 } from "@/types";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
@@ -109,16 +111,26 @@ export class KeyringClient {
   }
 
   /**
+   * Get the attestation status of a user for a specific policy
+   */
+  async getUserStatus(userId: string, policyId: string): Promise<UserStatus> {
+    const response = await this.client.get<UserStatus>(
+      `/api/l1/user/${userId}/policy/${policyId}/user-status`
+    );
+    return response.data;
+  }
+
+  /**
    * Validate data against a policy schema
    * @param userId - The user ID
    * @param policyId - The policy ID
    * @param data - The data object containing user information
    */
-  async validateData(
-    userId: string,
-    policyId: string,
-    data: Record<string, unknown>
-  ): Promise<ValidateDataResponse> {
+  async validateData({
+    userId,
+    policyId,
+    data,
+  }: ValidateDataRequest): Promise<ValidateDataResponse> {
     const response = await this.client.post<ValidateDataResponse>(
       `/api/l1/users/${userId}/policies/${policyId}/validate-data`,
       data
