@@ -1,15 +1,10 @@
 import keyringClient from "@/services/keyring";
+import { ValidateDataRequest } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
-
-export interface ValidateDataRequestBody {
-  userId: string;
-  policyId: string;
-  data: Record<string, unknown>;
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as ValidateDataRequestBody;
+    const body = (await request.json()) as ValidateDataRequest;
     const { userId, policyId, data } = body;
 
     if (!userId || !policyId || !data) {
@@ -19,11 +14,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validationResult = await keyringClient.validateData(
-      userId,
-      policyId,
-      data
-    );
+    const validationResult = await keyringClient.validateData(body);
     return NextResponse.json(validationResult);
   } catch (error: unknown) {
     const errorResponse = error as {

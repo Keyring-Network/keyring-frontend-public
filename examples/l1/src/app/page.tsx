@@ -7,7 +7,13 @@ import { Scalar, utils as ffutils } from "ffjavascript";
 import { groth16, zKey as zKeyGen } from "snarkjs";
 import { NewUserForm } from "@/components/NewUserForm";
 import { SimulateCredentialUpdate } from "@/components/SimulateCredentialUpdate";
-import { BlindedSignatureResponse, Policy, User } from "@/types";
+import {
+  AttestationStatus,
+  BlindedSignatureResponse,
+  Policy,
+  User,
+  UserStatus,
+} from "@/types";
 import {
   CredentialUpdateCalldata,
   KeyringZKPG,
@@ -59,20 +65,24 @@ export default function SdkTestPage() {
     lastName: "Last Name",
     email: `test-${Date.now()}@example.com`,
   });
-  const [validationResult, setValidationResult] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
+
   const [calldata, setCalldata] = useState<CredentialUpdateCalldata | null>(
     null
   );
+  const [attestationStatus, setAttestationStatus] =
+    useState<AttestationStatus | null>(null);
+  const [isFetchingUserStatus, setIsFetchingUserStatus] = useState(false);
+
+  const isAttestationReady =
+    attestationStatus === AttestationStatus.ATTESTATION_READY;
 
   const isPending =
     isFetchingPolicies ||
     isFetchingUsers ||
     isCreatingUser ||
     isValidating ||
-    isGenerating;
+    isGenerating ||
+    isFetchingUserStatus;
 
   // Step 1: Fetch policies
   const fetchPolicies = async () => {
@@ -147,8 +157,7 @@ export default function SdkTestPage() {
         },
       });
 
-      setValidationResult(response.data);
-      return response.data.valid;
+      setAttestationStatus(response.data.attestation_status);
     } catch (err: Error | unknown) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setError(`Error validating data: ${errorMessage}`);
@@ -239,6 +248,30 @@ export default function SdkTestPage() {
     }
   };
 
+  // Fetch user status to check if the user is ready to generate a credential
+  const fetchUserStatus = async () => {
+    if (!user || !selectedPolicy) {
+      setAttestationStatus(null);
+      return;
+    }
+
+    try {
+      setIsFetchingUserStatus(true);
+      const res = await axios.get<UserStatus>(`/api/user-status`, {
+        params: {
+          userId: user.id,
+          policyId: selectedPolicy.id,
+        },
+      });
+      setAttestationStatus(res.data.attestation_status);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(`Error fetching user status: ${errorMessage}`);
+    } finally {
+      setIsFetchingUserStatus(false);
+    }
+  };
+
   // Initialize the KeyringZKPG instance and fetch policies on component mount
   useEffect(() => {
     const initKeyringZKPG = async () => {
@@ -258,6 +291,11 @@ export default function SdkTestPage() {
     fetchPolicies();
     fetchUsers();
   }, []);
+
+  // Fetch user status when user or policy changes
+  useEffect(() => {
+    fetchUserStatus();
+  }, [user, selectedPolicy]);
 
   return (
     <div className="p-8">
@@ -360,7 +398,7 @@ export default function SdkTestPage() {
           <button
             className="bg-indigo-500 text-white p-2 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={generateCredentialUpdateCalldata}
-            disabled={isPending}
+            disabled={isPending || !isAttestationReady}
           >
             {isGenerating ? "Generating..." : "Generate Credential"}
           </button>
@@ -375,21 +413,24 @@ export default function SdkTestPage() {
       )}
 
       {user && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold">Selected User</h2>
-          <pre className="p-2 bg-gray-100 rounded overflow-auto">
-            {JSON.stringify(user, null, 2)}
-          </pre>
-        </div>
-      )}
-
-      {validationResult && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold">Validation Result</h2>
-          <pre className="p-2 bg-gray-100 rounded overflow-auto">
-            {JSON.stringify(validationResult, null, 2)}
-          </pre>
-        </div>
+        <>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">Selected User</h2>
+            <pre className="p-2 bg-gray-100 rounded overflow-auto">
+              {JSON.stringify(user, null, 2)}
+            </pre>
+          </div>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">User Attestation Status</h2>
+            <pre className="p-2 bg-gray-100 rounded overflow-auto">
+              {isFetchingUserStatus || isValidating
+                ? "Fetching user status..."
+                : attestationStatus
+                ? JSON.stringify(attestationStatus, null, 2)
+                : error || "No user status found"}
+            </pre>
+          </div>
+        </>
       )}
 
       {calldata && (

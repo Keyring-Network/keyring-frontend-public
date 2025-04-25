@@ -48,9 +48,22 @@ export interface BlindedSignatureResponse {
 }
 
 export interface ValidateDataRequest {
+  userId: string;
+  policyId: string;
   data: Record<string, unknown>;
 }
 
 export interface ValidateDataResponse {
-  status: string;
+  attestation_status: AttestationStatus;
+}
+
+export interface UserStatus {
+  attestation_status: AttestationStatus;
+}
+
+export enum AttestationStatus {
+  ATTESTATION_READY = "attestation_ready",
+  ONBOARDING_REQUIRED = "onboarding_required",
+  ONBOARDING_PENDING = "onboarding_pending",
+  NON_COMPLIANT = "non_compliant",
 }
