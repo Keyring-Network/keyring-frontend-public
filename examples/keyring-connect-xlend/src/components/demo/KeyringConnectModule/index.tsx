@@ -114,10 +114,12 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
       setFlowState("progress");
       setCalldata(null);
 
-      // Start periodic status checks
-      startStatusChecks();
-
       await KeyringConnect.launchExtension(exampleConfig);
+
+      // Start periodic status checks
+      setTimeout(() => {
+        startStatusChecks();
+      }, 5000);
     } catch (error) {
       console.error("Failed to launch extension:", error);
     }
