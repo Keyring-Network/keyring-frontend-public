@@ -6,7 +6,7 @@ import { NetworkSelector } from "@/components/wallet/NetworkSelector";
 
 export function AppHeader() {
   return (
-    <div className="p-4 flex justify-between items-center">
+    <div className="p-4 flex justify-between items-center min-h-[68px]">
       <div className="flex items-center gap-8">
         <Image src="/xlend-logo.svg" alt="xLend" width={89.39} height={22.78} />
         <div className="flex items-center gap-6 ml-4">

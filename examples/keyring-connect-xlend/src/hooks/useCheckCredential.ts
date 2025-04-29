@@ -69,8 +69,6 @@ export const useCheckCredential = (policyId: number): CheckCredentialResult => {
   const hasChecked = !isPending && !isError;
   const hasValidCredential = data === true;
 
-  console.log({ data, isPending, isError, error });
-
   const status = useMemo(() => {
     if (hasValidCredential) return "valid";
     if (hasChecked) return "no-credential";

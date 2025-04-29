@@ -10,84 +10,63 @@ import {
   SupportedChainId,
 } from "@keyringnetwork/keyring-connect-sdk";
 import { Icon } from "./Icon";
-import { useAccount } from "wagmi";
-import { useWalletModalStore } from "@/hooks/store/useWalletModalStore";
-import { useCheckCredential } from "@/hooks/useCheckCredential";
+import { FlowState } from "@/app/page";
+import { KeyringLogo } from "@/components/ui/keyring-logo";
 
 interface KeyringConnectModuleProps {
   policyId: number;
+  address?: `0x${string}`;
+  chainId?: number;
+  flowState: FlowState | null;
+  setFlowState: (flowState: FlowState) => void;
 }
-
-export type FlowState =
-  | "loading"
-  | "error"
-  | "install"
-  | "start"
-  | "progress"
-  | "calldata-ready"
-  | "transaction"
-  | "valid";
 
 /**
  * The `KeyringConnectModule` component showcases how the Keyring Connect verification process can be implemented.
  *
  * @param {number} policyId - The policy ID to be used for the Keyring Connect verification process.
  */
-export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
+export function KeyringConnectModule({
+  policyId,
+  address,
+  chainId,
+  flowState,
+  setFlowState,
+}: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { address, isConnected, chainId } = useAccount();
-  const { open } = useWalletModalStore();
-
-  // Unified state for the complete E2E flow
-  const [flowState, setFlowState] = useState<FlowState>("loading");
-
-  console.log("flowState", flowState);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
   // Status check interval ID for cleanup
   const [statusCheckInterval, setStatusCheckInterval] =
     useState<NodeJS.Timeout | null>(null);
 
-  const { status: credentialStatus, error: credentialError } =
-    useCheckCredential(policyId);
-
-  // Update flow state based on credential status
+  // Update flow if user has no credential
   useEffect(() => {
+    if (flowState !== "no-credential") return;
+
     const updateFlowState = async () => {
-      switch (credentialStatus) {
-        case "loading":
-          setFlowState("loading");
-          break;
-        case "error":
-          setFlowState("error");
-          break;
-        case "valid":
-          setFlowState("valid");
-          break;
-        case "no-credential":
-          // check if extension is installed and if attestation is ready
-          const installed = await KeyringConnect.isKeyringConnectInstalled();
-          if (!installed) {
-            setFlowState("install");
-          } else {
-            const { credentialData } = await KeyringConnect.getExtensionState();
-            if (
-              credentialData &&
-              credentialData.trader === address &&
-              credentialData.policyId === policyId
-            ) {
-              setFlowState("calldata-ready");
-            } else {
-              setFlowState("start");
-            }
-          }
-          break;
+      const installed = await KeyringConnect.isKeyringConnectInstalled();
+      if (!installed) {
+        setFlowState("install");
+      } else {
+        const { credentialData } = await KeyringConnect.getExtensionState();
+        if (
+          credentialData &&
+          credentialData.trader === address &&
+          credentialData.policyId === policyId
+        ) {
+          setCalldata(credentialData);
+          setFlowState("calldata-ready");
+        } else {
+          setFlowState("start");
+        }
       }
     };
 
     updateFlowState();
-  }, [credentialStatus]);
+  }, [flowState, setFlowState, address, policyId]);
+
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
@@ -160,10 +139,10 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
 
   // CHECK VERIFICATION STATUS
   const checkStatus = async () => {
-    setIsLoading(true);
+    if (isCheckingStatus) return;
+    setIsCheckingStatus(true);
     try {
       const state = await KeyringConnect.getExtensionState();
-      console.log("Extension state:", state);
 
       // Check if user exists and attestation is ready
       if (state.credentialData) {
@@ -192,13 +171,10 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
     } catch (error) {
       console.error("Failed to check status:", error);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsCheckingStatus(false);
+      }, 1500);
     }
-  };
-
-  // Manual check status button handler
-  const handleCheckStatus = () => {
-    checkStatus();
   };
 
   useEffect(() => {
@@ -206,6 +182,7 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
   }, []);
 
   const createCredential = async () => {
+    // FIXME: add logic to create the credential
     console.log("createCredential", { calldata });
   };
 
@@ -217,37 +194,19 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
     }
   }, [address, chainId]);
 
-  if (!isMounted) return null;
-
-  if (!isConnected) {
-    return (
-      <Button
-        variant="outline"
-        className="rounded-md w-full border-blue-500 text-blue-500 flex items-center h-14"
-        onClick={open}
-      >
-        <p>Connect your wallet to continue</p>
-      </Button>
-    );
-  }
+  if (!isMounted || !flowState) return null;
 
   const renderKeyringConnectModule = () => {
-    if (flowState === "loading") {
+    if (
+      flowState === "loading" ||
+      flowState === "error" ||
+      flowState === "valid"
+    ) {
       return;
     }
 
-    if (flowState === "error") {
-      return <div>Error: {credentialError?.message}</div>;
-    }
-
     return (
-      <div
-        className={`p-6 border rounded-lg animate-slideDown ${
-          flowState === "valid"
-            ? "bg-green-50 border-green-200 px-6 py-2"
-            : "bg-white border-gray-200"
-        }`}
-      >
+      <div className="flex flex-col gap-4 p-6 border rounded-lg animate-slideDown bg-white border-gray-200">
         <div className="flex items-start gap-4">
           <Icon flowState={flowState} />
 
@@ -255,17 +214,13 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
             {flowState === "install" && (
               <>
                 <h3 className="font-medium text-gray-900">
-                  Keyring Connect Verification Required
+                  Verification Required
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
                   Install the Keyring extension to complete identity
                   verification.
                 </p>
-                <Button
-                  className="mt-3"
-                  onClick={launchExtension}
-                  disabled={isLoading}
-                >
+                <Button className="mt-3" onClick={launchExtension}>
                   Install Extension
                 </Button>
               </>
@@ -274,19 +229,12 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
             {flowState === "start" && (
               <>
                 <h3 className="font-medium text-gray-900">
-                  Complete Keyring Connect Verification
+                  Verification Required
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
                   Verify your identity to access lending features.
                 </p>
-                <Button
-                  className="mt-3"
-                  onClick={launchExtension}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader className="h-4 w-4 mr-2 animate-spin" />
-                  ) : null}
+                <Button className="mt-3" onClick={launchExtension}>
                   Start Verification
                 </Button>
               </>
@@ -295,25 +243,25 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
             {flowState === "progress" && (
               <>
                 <h3 className="font-medium text-gray-900">
-                  Keyring Connect Verification In Progress
+                  Verification In Progress
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  After the verification is complete, you can continue here.
+                  After the verification you can continue here.
                 </p>
-                <div className="flex gap-2 mt-3">
-                  <Button onClick={handleCheckStatus} disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader className="h-4 w-4 mr-2 animate-spin " />
-                    ) : null}
-                    Check Status
+                <div className="flex gap-2 justify-between mt-3">
+                  <Button
+                    onClick={checkStatus}
+                    disabled={isCheckingStatus}
+                    variant="outline"
+                  >
+                    {isCheckingStatus ? "Checking..." : "Check Status"}
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => {
                       if (statusCheckInterval) {
                         clearInterval(statusCheckInterval);
                         setStatusCheckInterval(null);
-                        // FIXME: Allow closing of the extension ???
                       }
                       setFlowState("start");
                     }}
@@ -326,14 +274,12 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
 
             {flowState === "calldata-ready" && (
               <>
-                <h3 className="font-medium text-gray-900">
-                  Credential Update Transaction Ready
-                </h3>
+                <h3 className="font-medium text-gray-900">Credential Update</h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Sign the transaction to create the on-chain credential
+                  Transaction ready to create the on-chain credential
                 </p>
                 <Button className="mt-3" onClick={createCredential}>
-                  Create Credential
+                  Sign Transaction
                 </Button>
               </>
             )}
@@ -355,49 +301,16 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
                 </p>
               </>
             )}
-
-            {flowState === "valid" && (
-              <>
-                <p className="text-sm text-green-600 mt-0.5">
-                  You have valid credentials.
-                </p>
-              </>
-            )}
           </div>
+        </div>
+        <div className="bg-gray-100 h-px w-full mt-2" />
+        <div className="w-full flex justify-center items-center gap-2">
+          <p className="text-xs">Provided by </p>
+          <KeyringLogo dark height={12} />
         </div>
       </div>
     );
   };
 
-  return (
-    <>
-      {renderKeyringConnectModule()}
-      <MainCtaButton
-        isVerified={flowState === "valid"}
-        isLoading={flowState === "loading"}
-      />
-    </>
-  );
+  return renderKeyringConnectModule();
 }
-
-const MainCtaButton = ({
-  isVerified,
-  isLoading,
-}: {
-  isVerified: boolean;
-  isLoading: boolean;
-}) => {
-  return (
-    <Button
-      className="w-full mt-6"
-      disabled={!isVerified || isLoading}
-      variant={isVerified ? "default" : "secondary"}
-    >
-      {isVerified
-        ? "Lend"
-        : isLoading
-        ? "Loading credential status..."
-        : "Complete Verification to continue"}
-    </Button>
-  );
-};

@@ -1,5 +1,5 @@
 import { ShieldCheck, Blocks, UserIcon } from "lucide-react";
-import { FlowState } from ".";
+import { FlowState } from "@/app/page";
 
 export function Icon({ flowState }: { flowState: FlowState }) {
   const renderIcon = () => {
