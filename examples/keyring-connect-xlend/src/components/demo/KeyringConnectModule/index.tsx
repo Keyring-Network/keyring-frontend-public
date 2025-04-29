@@ -5,7 +5,6 @@ import { Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   KeyringConnect,
-  ExtensionState,
   ExtensionSDKConfig,
   CredentialData,
   SupportedChainId,
@@ -37,9 +36,6 @@ export type FlowState =
 export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
-  const [extensionState, setExtensionState] = useState<ExtensionState | null>(
-    null
-  );
   const [isLoading, setIsLoading] = useState(false);
   const { address, isConnected, chainId } = useAccount();
   const { open } = useWalletModalStore();
@@ -75,7 +71,16 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
           if (!installed) {
             setFlowState("install");
           } else {
-            setFlowState("start");
+            const { credentialData } = await KeyringConnect.getExtensionState();
+            if (
+              credentialData &&
+              credentialData.trader === address &&
+              credentialData.policyId === policyId
+            ) {
+              setFlowState("calldata-ready");
+            } else {
+              setFlowState("start");
+            }
           }
           break;
       }
@@ -158,8 +163,6 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
     setIsLoading(true);
     try {
       const state = await KeyringConnect.getExtensionState();
-      setExtensionState(state);
-
       console.log("Extension state:", state);
 
       // Check if user exists and attestation is ready
@@ -318,25 +321,6 @@ export function KeyringConnectModule({ policyId }: KeyringConnectModuleProps) {
                     Cancel
                   </Button>
                 </div>
-                {extensionState?.user ? (
-                  <>
-                    <div className="mt-2 text-xs text-gray-500">
-                      Wallet Address: {extensionState.user.wallet_address}
-                    </div>
-                    <div className="mt-2 text-xs text-gray-500">
-                      Attestation Status:{" "}
-                      {extensionState.user.attestation_status}
-                    </div>
-                    <div className="mt-2 text-xs text-gray-500">
-                      Credential Status:{" "}
-                      {extensionState.user.credential_status || "none"}
-                    </div>
-                  </>
-                ) : (
-                  <div className="mt-2 text-xs text-gray-500">
-                    Status: Waiting for user authentication...
-                  </div>
-                )}
               </>
             )}
 
