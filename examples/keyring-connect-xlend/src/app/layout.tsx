@@ -4,6 +4,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WagmiProvider } from "@/components/providers/WagmiProvider";
 import { WalletModal } from "@/components/wallet/WalletModal";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
         <WagmiProvider>
           <TooltipProvider>
             <main className="h-full">{children}</main>
+            <Toaster theme="light" />
             <WalletModal />
           </TooltipProvider>
         </WagmiProvider>

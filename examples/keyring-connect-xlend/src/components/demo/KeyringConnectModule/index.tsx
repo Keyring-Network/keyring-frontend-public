@@ -12,6 +12,7 @@ import {
 import { Icon } from "./Icon";
 import { FlowState } from "@/app/page";
 import { KeyringLogo } from "@/components/ui/keyring-logo";
+import { CredentialUpdate } from "./CredentialUpdate";
 
 interface KeyringConnectModuleProps {
   policyId: number;
@@ -54,19 +55,20 @@ export function KeyringConnectModule({
         if (
           credentialData &&
           credentialData.trader === address &&
-          credentialData.policyId === policyId
+          credentialData.policyId === policyId &&
+          credentialData.chainId === chainId
         ) {
           setCalldata(credentialData);
           setFlowState("calldata-ready");
         } else {
+          setCalldata(null);
           setFlowState("start");
         }
       }
     };
 
     updateFlowState();
-  }, [flowState, setFlowState, address, policyId]);
-
+  }, [flowState, setFlowState, address, policyId, chainId]);
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
@@ -139,7 +141,12 @@ export function KeyringConnectModule({
 
   // CHECK VERIFICATION STATUS
   const checkStatus = async () => {
-    if (isCheckingStatus) return;
+    if (
+      isCheckingStatus ||
+      flowState === "valid" ||
+      flowState === "transaction-pending"
+    )
+      return;
     setIsCheckingStatus(true);
     try {
       const state = await KeyringConnect.getExtensionState();
@@ -181,11 +188,6 @@ export function KeyringConnectModule({
     setIsMounted(true);
   }, []);
 
-  const createCredential = async () => {
-    // FIXME: add logic to create the credential
-    console.log("createCredential", { calldata });
-  };
-
   // Reset calldata when the account changes
   // Could also work with a map of address -> calldata to avoid too strict garbage collection
   useEffect(() => {
@@ -193,6 +195,20 @@ export function KeyringConnectModule({
       setCalldata(null);
     }
   }, [address, chainId]);
+
+  // Clear interval when we reach states where checking is no longer needed
+  useEffect(() => {
+    if (
+      flowState === "calldata-ready" ||
+      flowState === "transaction-pending" ||
+      flowState === "valid"
+    ) {
+      if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+        setStatusCheckInterval(null);
+      }
+    }
+  }, [flowState, statusCheckInterval]);
 
   if (!isMounted || !flowState) return null;
 
@@ -272,35 +288,24 @@ export function KeyringConnectModule({
               </>
             )}
 
-            {flowState === "calldata-ready" && (
-              <>
-                <h3 className="font-medium text-gray-900">Credential Update</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Transaction ready to create the on-chain credential
-                </p>
-                <Button className="mt-3" onClick={createCredential}>
-                  Sign Transaction
-                </Button>
-              </>
-            )}
-
-            {flowState === "transaction" && (
-              <>
-                <h3 className="font-medium text-gray-900">
-                  Finalizing Verification
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Your verification is being recorded on the blockchain.
-                </p>
-                <div className="flex items-center justify-center py-4">
-                  <Loader className="h-8 w-8 animate-spin text-blue-500" />
-                </div>
-                <p className="text-xs text-gray-500">
-                  Transaction in progress. This may take a few moments to
-                  confirm...
-                </p>
-              </>
-            )}
+            {(flowState === "calldata-ready" ||
+              flowState === "transaction-pending") &&
+              calldata && (
+                <>
+                  <h3 className="font-medium text-gray-900">
+                    Credential Update
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Transaction ready to create the on-chain credential
+                  </p>
+                  <CredentialUpdate
+                    calldata={calldata}
+                    onTransactionPending={() =>
+                      setFlowState("transaction-pending")
+                    }
+                  />
+                </>
+              )}
           </div>
         </div>
         <div className="bg-gray-100 h-px w-full mt-2" />

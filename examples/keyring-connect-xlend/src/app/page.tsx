@@ -19,7 +19,7 @@ export type FlowState =
   | "start"
   | "progress"
   | "calldata-ready"
-  | "transaction"
+  | "transaction-pending"
   | "valid";
 
 export default function KeyringConnectDemo() {

@@ -3,14 +3,14 @@ import type {
   G1Point,
   Hexlified,
   SnarkJS,
-} from '@keyringnetwork/circuits';
-import * as circuit from '@keyringnetwork/circuits/circuit';
-import * as crypto from '@keyringnetwork/circuits/crypto';
-import * as domainobjs from '@keyringnetwork/circuits/domainobjs';
-import { hexlifyBigInts } from '@keyringnetwork/circuits/utils';
-import axios from 'axios';
-import { toHex } from 'viem';
-import { ArtifactStorage } from '../storage/ArtifactStorage';
+} from "@keyringnetwork/circuits";
+import * as circuit from "@keyringnetwork/circuits/circuit";
+import * as crypto from "@keyringnetwork/circuits/crypto";
+import * as domainobjs from "@keyringnetwork/circuits/domainobjs";
+import { hexlifyBigInts } from "@keyringnetwork/circuits/utils";
+import axios from "axios";
+import { toHex } from "viem";
+import { ArtifactStorage } from "../storage/ArtifactStorage";
 import type {
   CredentialUpdateCalldata,
   KeyringZKPGArtifacts,
@@ -20,13 +20,13 @@ import type {
   KeyringZKPGStatus,
   PublicKeySchema,
   RegimeKeySchema,
-} from './types';
+} from "./types";
 
 const ZK_FILES_SOURCE = {
   authorisationConstruction: [
-    'https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.01.zKey',
-    'https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.wasm',
-    'https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.public.sym.json',
+    "https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.01.zKey",
+    "https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.wasm",
+    "https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.public.sym.json",
   ],
 };
 
@@ -69,18 +69,18 @@ export class KeyringZKPG {
    * Initialize the KeyringZKPG instance
    */
   public async init(): Promise<void> {
-    this.log('init', this.status);
-    if (this.status === 'prefetching_files' || this.status === 'idle') {
+    this.log("init", this.status);
+    if (this.status === "prefetching_files" || this.status === "idle") {
       return;
     }
 
-    this.status = 'prefetching_files';
+    this.status = "prefetching_files";
 
     try {
       await this.fetchZkArtifacts();
-      this.updateStatus('idle');
+      this.updateStatus("idle");
     } catch (error) {
-      this.handleError(error, 'Failed to initialize ZK engine');
+      this.handleError(error, "Failed to initialize ZK engine");
     }
   }
 
@@ -94,20 +94,20 @@ export class KeyringZKPG {
     witness: circuit.AuthorisationConstructionWitness;
   }> {
     try {
-      this.updateStatus('generating_proof');
+      this.updateStatus("generating_proof");
 
       // Now proceed with proof generation
       const proofData = await this.generateZkProof(input);
 
       if (!proofData) {
-        throw new Error('Failed to generate proof');
+        throw new Error("Failed to generate proof");
       }
 
-      this.updateStatus('proofs_ready');
+      this.updateStatus("proofs_ready");
 
       return proofData;
     } catch (error) {
-      this.handleError(error, 'Failed to generate proof');
+      this.handleError(error, "Failed to generate proof");
       throw error;
     }
   }
@@ -116,7 +116,7 @@ export class KeyringZKPG {
    * Get current status of the KeyringZKPG instance
    */
   public getStatus(): KeyringZKPGStatus | null {
-    this.log('getStatus', this.status);
+    this.log("getStatus", this.status);
     return this.status;
   }
 
@@ -126,13 +126,13 @@ export class KeyringZKPG {
 
   private handleError(error: unknown, message: string): void {
     console.error(message, error);
-    this.updateStatus('error');
+    this.updateStatus("error");
   }
 
   private async fetchZkArtifacts(): Promise<KeyringZKPGArtifacts> {
-    this.log('fetchZkArtifacts');
+    this.log("fetchZkArtifacts");
     if (!this.artifactsFetchPromise) {
-      this.log('fetchZkArtifacts: no fetch in progress');
+      this.log("fetchZkArtifacts: no fetch in progress");
       // If no fetch is in progress, start one
       this.abortController = new AbortController();
       this.artifactsFetchPromise = this._fetchZkArtifacts(
@@ -142,10 +142,10 @@ export class KeyringZKPG {
 
     try {
       // Wait for artifacts to be loaded
-      this.log('fetchZkArtifacts: waiting for artifacts');
+      this.log("fetchZkArtifacts: waiting for artifacts");
       return await this.artifactsFetchPromise;
     } catch (error) {
-      this.log('fetchZkArtifacts: fetch failed');
+      this.log("fetchZkArtifacts: fetch failed");
       // If fetch failed, clear the promise so we can try again
       this.artifactsFetchPromise = null;
       throw new Error(
@@ -158,33 +158,33 @@ export class KeyringZKPG {
     signal?: AbortSignal
   ): Promise<KeyringZKPGArtifacts> {
     try {
-      this.log('Starting ZK artifacts fetching...');
+      this.log("Starting ZK artifacts fetching...");
 
       // Process authorisationConstruction artifacts
       const fileList = ZK_FILES_SOURCE.authorisationConstruction;
 
       // Check if we already have this artifact cached
       const cachedArtifact = await this.storage.getArtifact().catch((error) => {
-        console.error('Failed to get cached ZK artifacts:', error);
+        console.error("Failed to get cached ZK artifacts:", error);
         return null;
       });
 
       if (cachedArtifact) {
-        this.log('Using cached ZK artifacts');
+        this.log("Using cached ZK artifacts");
         return cachedArtifact;
       }
 
       // Fetch each file with abort signal support
       const artifactPromises = fileList.map(async (file) => {
         // Check for abort signal
-        if (signal?.aborted) throw new Error('Operation aborted');
+        if (signal?.aborted) throw new Error("Operation aborted");
 
         // Determine if JSON or binary
-        const isJson = file.endsWith('.json');
+        const isJson = file.endsWith(".json");
 
         try {
           const response = await axios.get(file, {
-            responseType: isJson ? 'json' : 'arraybuffer',
+            responseType: isJson ? "json" : "arraybuffer",
             signal,
           });
 
@@ -207,26 +207,26 @@ export class KeyringZKPG {
 
       // Store the complete artifact
       await this.storage.storeArtifact(artifact);
-      this.log('ZK artifacts successfully cached');
+      this.log("ZK artifacts successfully cached");
 
       return artifact;
     } catch (error: any) {
       if (signal?.aborted) {
-        this.log('ZK artifacts fetch was cancelled');
-        throw new Error('Operation cancelled');
+        this.log("ZK artifacts fetch was cancelled");
+        throw new Error("Operation cancelled");
       }
 
-      console.error('Failed to prefetch ZK artifacts:', error.message);
-      throw new Error('Failed to prefetch ZK artifacts');
+      console.error("Failed to prefetch ZK artifacts:", error.message);
+      throw new Error("Failed to prefetch ZK artifacts");
     }
   }
 
   private async retrieveCircuit(): Promise<circuit.CircuitSetup> {
     try {
       const artifact = await this.fetchZkArtifacts();
-      this.log('Circuit retrieved', artifact);
+      this.log("Circuit retrieved", artifact);
       if (!artifact) {
-        throw new Error('KeyringZKPGArtifacts not found');
+        throw new Error("KeyringZKPGArtifacts not found");
       }
 
       return new circuit.CircuitSetup(
@@ -272,7 +272,7 @@ export class KeyringZKPG {
 
       return identity;
     } catch (error) {
-      throw new Error('Failed to generate identity');
+      throw new Error("Failed to generate identity");
     }
   }
 
@@ -284,13 +284,13 @@ export class KeyringZKPG {
     input: KeyringZKPGInput
   ): Promise<KeyringZKPGOutput> {
     try {
-      this.log('Generating ZK proof...');
+      this.log("Generating ZK proof...");
       const policy = this.policyDomainObject(input);
-      this.log('Policy generated');
+      this.log("Policy generated");
       const identity = await this.generateIdentity(input.tradingWallet, policy);
-      this.log('Identity generated');
+      this.log("Identity generated");
       if (!identity) {
-        throw new Error('Failed to generate identity');
+        throw new Error("Failed to generate identity");
       }
 
       const witness = new circuit.AuthorisationConstructionWitness(
@@ -300,25 +300,25 @@ export class KeyringZKPG {
         undefined,
         this.getPolicyRegimes(input.policy.regime_key)
       );
-      this.log('Witness generated');
+      this.log("Witness generated");
       const circuitSetup = await this.retrieveCircuit();
-      this.log('Circuit setup retrieved');
+      this.log("Circuit setup retrieved");
       if (!circuitSetup) {
-        throw new Error('Circuit setup is undefined');
+        throw new Error("Circuit setup is undefined");
       }
 
       const circuitProof = await circuitSetup.fullProve(witness.witnessInputs);
-      this.log('Circuit proof generated');
+      this.log("Circuit proof generated");
       if (!circuitProof) {
-        throw new Error('Failed to generate circuit proof');
+        throw new Error("Failed to generate circuit proof");
       }
 
       const proof = circuit.AuthorisationConstructionProof.from(circuitProof);
-      this.log('Proof generated');
+      this.log("Proof generated");
       const snarkjsProof = hexlifyBigInts(
         proof.snarkjs_proof
       ) as Hexlified<any>;
-      this.log('Proof hexlified');
+      this.log("Proof hexlified");
 
       // Return the proof data instead of making the API call
       return {
@@ -338,7 +338,7 @@ export class KeyringZKPG {
   ): Promise<CredentialUpdateCalldata> {
     const blindedSignatureBuffer = Buffer.from(
       blindedSignature.slice(2),
-      'hex'
+      "hex"
     );
 
     const { policy, tradingWallet, chainId } = zkpgInput;
@@ -348,7 +348,7 @@ export class KeyringZKPG {
     const isValidSignature = await witness.verifySignature(_signature);
 
     if (!isValidSignature) {
-      throw new Error('Invalid signature');
+      throw new Error("Invalid signature");
     }
 
     const signature = toHex(_signature);
@@ -389,16 +389,16 @@ export class KeyringZKPG {
       // Verify injection worked
       if (
         !crypto.babyJub ||
-        typeof crypto.babyJub.mulPointEscalar !== 'function'
+        typeof crypto.babyJub.mulPointEscalar !== "function"
       ) {
         this.log(
-          'KeyringZKPG: Failed to inject external dependencies properly'
+          "KeyringZKPG: Failed to inject external dependencies properly"
         );
       } else {
-        this.log('KeyringZKPG: Successfully injected external dependencies');
+        this.log("KeyringZKPG: Successfully injected external dependencies");
       }
     } catch (error) {
-      this.log('KeyringZKPG: Error injecting external dependencies', error);
+      this.log("KeyringZKPG: Error injecting external dependencies", error);
       throw new Error(
         `Failed to inject external dependencies: ${(error as Error).message}`
       );
@@ -410,7 +410,7 @@ export class KeyringZKPG {
    */
   private log(...args: any[]): void {
     if (this.debugMode) {
-      console.debug('%cDebug [KeyringZKPG]:', 'color: #EB4577', ...args);
+      console.debug("%cDebug [KeyringZKPG]:", "color: #EB4577", ...args);
     }
   }
 
@@ -419,6 +419,6 @@ export class KeyringZKPG {
       this.abortController.abort();
       this.abortController = null;
     }
-    this.status = 'idle';
+    this.status = "idle";
   }
 }
