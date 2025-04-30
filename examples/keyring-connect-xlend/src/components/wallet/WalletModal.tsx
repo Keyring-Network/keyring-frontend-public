@@ -6,7 +6,7 @@ import { useAccount, useConnect } from "wagmi";
 import { Connector } from "wagmi";
 import { useWalletModalStore } from "@/hooks/store/useWalletModalStore";
 import { useEffect } from "react";
-import Image from "next/image";
+
 export function WalletModal() {
   const { isOpen, close } = useWalletModalStore();
   const { connect, connectors, isPending } = useConnect({});
