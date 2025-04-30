@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   KeyringConnect,

@@ -76,7 +76,6 @@ export const useCredentialUpdate = ({
 
   const {
     data: transactionReceipt,
-    error: transactionReceiptError,
     status: transactionReceiptStatus,
     isFetching: isPendingTransactionReceipt,
   } = useWaitForTransactionReceipt({
