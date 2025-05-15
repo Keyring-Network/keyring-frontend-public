@@ -67,16 +67,6 @@ export class KeyringClient {
   }
 
   /**
-   * Get a specific policy by ID
-   */
-  async getPolicy(policyId: string): Promise<Policy> {
-    const response = await this.client.get<Policy>(
-      `/api/l1/policies/${policyId}`
-    );
-    return response.data;
-  }
-
-  /**
    * Create a new user
    */
   async createUser(
@@ -113,9 +103,12 @@ export class KeyringClient {
   /**
    * Get the attestation status of a user for a specific policy
    */
-  async getUserStatus(userId: string, policyId: string): Promise<UserStatus> {
+  async getUserStatus(
+    userId: string,
+    onchainPolicyId: string
+  ): Promise<UserStatus> {
     const response = await this.client.get<UserStatus>(
-      `/api/l1/user/${userId}/policy/${policyId}/user-status`
+      `/api/l1/user/${userId}/policy/${onchainPolicyId}/user-status`
     );
     return response.data;
   }
@@ -123,16 +116,16 @@ export class KeyringClient {
   /**
    * Validate data against a policy schema
    * @param userId - The user ID
-   * @param policyId - The policy ID
+   * @param onchainPolicyId - The onchain policy ID
    * @param data - The data object containing user information
    */
   async validateData({
     userId,
-    policyId,
+    onchainPolicyId,
     data,
   }: ValidateDataRequest): Promise<ValidateDataResponse> {
     const response = await this.client.post<ValidateDataResponse>(
-      `/api/l1/users/${userId}/policies/${policyId}/validate-data`,
+      `/api/l1/users/${userId}/policies/${onchainPolicyId}/validate-data`,
       data
     );
     return response.data;
@@ -143,11 +136,17 @@ export class KeyringClient {
    */
   async getBlindedSignature(
     userId: string,
-    policyId: string,
+    onchainPolicyId: number,
     data: BlindedSignatureRequest
   ): Promise<BlindedSignatureResponse> {
+    console.log(
+      "Getting blinded signature for user",
+      userId,
+      "and policy",
+      `/api/l1/users/${userId}/policy/${onchainPolicyId}/get-blinded-signature`
+    );
     const response = await this.client.post<BlindedSignatureResponse>(
-      `/api/l1/users/${userId}/policy/${policyId}/get-blinded-signature`,
+      `/api/l1/users/${userId}/policy/${onchainPolicyId}/get-blinded-signature`,
       {
         proof: data.proof,
         public_signals: data.public_signals,

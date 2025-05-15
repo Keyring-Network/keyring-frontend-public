@@ -1,6 +1,7 @@
 // Stripped down Policy type to only include the fields needed for the test app
 export type Policy = {
   id: number;
+  onchain_id: number;
   name: string;
   costs: Array<PolicyCostSchema>;
   regime_key: RegimeKeySchema;
@@ -21,7 +22,6 @@ export type RegimeKeySchema = {
 export type PolicyCostSchema = {
   chain_id: number;
   cost: number;
-  policy_id: number;
 };
 
 export interface User {
@@ -49,7 +49,7 @@ export interface BlindedSignatureResponse {
 
 export interface ValidateDataRequest {
   userId: string;
-  policyId: string;
+  onchainPolicyId: string;
   data: Record<string, unknown>;
 }
 
