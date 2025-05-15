@@ -3,6 +3,7 @@ import { Hexlified } from '@keyringnetwork/circuits';
 
 export interface Policy {
   id: number;
+  onchain_id: number;
   regime_key: RegimeKeySchema;
   public_key: PublicKeySchema;
   duration: number;
@@ -27,7 +28,7 @@ export interface KeyringZKPGOutput {
 
 export interface CredentialUpdateCalldata {
   trader: string;
-  policyId: number;
+  onchainPolicyId: number;
   chainId: number;
   validUntil: number;
   cost: number;

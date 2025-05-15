@@ -50,7 +50,7 @@ export const SimulateCredentialUpdate = ({
     value: BigInt(calldata.cost),
     args: [
       calldata.trader,
-      calldata.policyId,
+      calldata.onchainPolicyId,
       calldata.chainId,
       calldata.validUntil,
       calldata.cost,

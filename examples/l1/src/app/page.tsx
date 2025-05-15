@@ -148,7 +148,7 @@ export default function SdkTestPage() {
       setIsValidating(true);
       const response = await axios.post("/api/validate-data", {
         userId: user.id,
-        policyId: selectedPolicy.id,
+        onchainPolicyId: selectedPolicy.onchain_id,
         data: {
           first_name: "First",
           last_name: "Last",
@@ -225,7 +225,7 @@ export default function SdkTestPage() {
           userId: user.id,
           proof: keyringZKPGOutput.proof,
           publicSignals: keyringZKPGOutput.publicSignals,
-          policyId: selectedPolicy.id,
+          onchainPolicyId: selectedPolicy.onchain_id,
         }
       );
 
@@ -260,7 +260,7 @@ export default function SdkTestPage() {
       const res = await axios.get<UserStatus>(`/api/user-status`, {
         params: {
           userId: user.id,
-          policyId: selectedPolicy.id,
+          onchainPolicyId: selectedPolicy.onchain_id,
         },
       });
       setAttestationStatus(res.data.attestation_status);

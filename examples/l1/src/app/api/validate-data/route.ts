@@ -5,9 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as ValidateDataRequest;
-    const { userId, policyId, data } = body;
+    const { userId, onchainPolicyId, data } = body;
 
-    if (!userId || !policyId || !data) {
+    if (!userId || !onchainPolicyId || !data) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }

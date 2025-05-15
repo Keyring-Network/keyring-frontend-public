@@ -4,15 +4,15 @@ import keyringClient from "@/services/keyring";
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get("userId");
-  const policyId = searchParams.get("policyId");
+  const onchainPolicyId = searchParams.get("onchainPolicyId");
 
-  if (!userId || !policyId) {
+  if (!userId || !onchainPolicyId) {
     return NextResponse.json(
-      { error: "User ID and policy ID are required" },
+      { error: "User ID and onchain policy ID are required" },
       { status: 400 }
     );
   }
 
-  const userStatus = await keyringClient.getUserStatus(userId, policyId);
+  const userStatus = await keyringClient.getUserStatus(userId, onchainPolicyId);
   return NextResponse.json(userStatus);
 }
