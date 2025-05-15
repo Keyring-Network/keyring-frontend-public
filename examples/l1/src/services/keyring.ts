@@ -139,12 +139,6 @@ export class KeyringClient {
     onchainPolicyId: number,
     data: BlindedSignatureRequest
   ): Promise<BlindedSignatureResponse> {
-    console.log(
-      "Getting blinded signature for user",
-      userId,
-      "and policy",
-      `/api/l1/users/${userId}/policy/${onchainPolicyId}/get-blinded-signature`
-    );
     const response = await this.client.post<BlindedSignatureResponse>(
       `/api/l1/users/${userId}/policy/${onchainPolicyId}/get-blinded-signature`,
       {
