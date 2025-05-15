@@ -248,7 +248,7 @@ export class KeyringZKPG {
     const { policy } = input;
 
     return new domainobjs.Policy(
-      policy.id,
+      policy.onchain_id,
       policy.duration,
       input.chainId,
       policy.cost,
@@ -361,7 +361,7 @@ export class KeyringZKPG {
 
     const calldata: CredentialUpdateCalldata = {
       trader: tradingWallet,
-      policyId: policy.id,
+      onchainPolicyId: policy.onchain_id,
       chainId,
       validUntil,
       cost,
