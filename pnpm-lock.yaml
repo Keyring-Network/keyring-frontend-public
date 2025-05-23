@@ -14,8 +14,8 @@ importers:
         specifier: ^2.2.1
         version: 2.2.1
       '@keyringnetwork/keyring-connect-sdk':
-        specifier: ^2.1.1
-        version: 2.1.1
+        specifier: ^2.2.0
+        version: 2.2.0
       '@radix-ui/react-dropdown-menu':
         specifier: ^2.1.12
         version: 2.1.12(@types/react-dom@19.1.2)(@types/react@19.1.2)(react-dom@19.1.0)(react@19.1.0)
@@ -966,8 +966,8 @@ packages:
     resolution: {integrity: sha512-M0gtW/vtQGFrPw4ff0AbloVXbKMo5vOCu5choAIVEamKKvoOoiEL6tysGxpwtbJ1GfEuRW9wrLLIGlkqaoJLNA==}
     dev: false
 
-  /@keyringnetwork/keyring-connect-sdk@2.1.1:
-    resolution: {integrity: sha512-Hka45A2M9fy1YhQTJDn1LiXGFFlFM4PtgkCrVH5Douw7XGLjprT7Jjq3KYvrqHu3hNN2rQBX+q+dFOkoM8CnxA==}
+  /@keyringnetwork/keyring-connect-sdk@2.2.0:
+    resolution: {integrity: sha512-+UlcaptBecbF4R9sTBAgMT0AEudmx3qHUzciH0uaDeK1akupx+50FIWL3IkMB/dcrnonHvjT0I1rmDNnGn2vxw==}
     dependencies:
       '@keyringnetwork/contracts-abi': 2.2.0
     dev: false
