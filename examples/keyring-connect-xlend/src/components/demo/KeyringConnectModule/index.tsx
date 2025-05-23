@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   KeyringConnect,
@@ -36,8 +36,6 @@ export function KeyringConnectModule({
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
-  const statusCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
   // Update flow if user has no credential
   useEffect(() => {
     if (flowState !== "no-credential") return;
@@ -66,6 +64,25 @@ export function KeyringConnectModule({
 
     updateFlowState();
   }, [flowState, setFlowState, address, policyId, chainId]);
+
+  // Subscribe to the extension state changes
+  useEffect(() => {
+    const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
+      if (!state) {
+        setFlowState("install");
+        return;
+      }
+
+      if (state?.credentialData) {
+        setFlowState("calldata-ready");
+        setCalldata(state.credentialData);
+      }
+    });
+
+    return unsubscribe; // Cleanup on unmount
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
@@ -98,45 +115,19 @@ export function KeyringConnectModule({
       setCalldata(null);
 
       await KeyringConnect.launchExtension(exampleConfig);
-
-      // Start periodic status checks
-      setTimeout(() => {
-        startStatusChecks();
-      }, 5000);
     } catch (error) {
       console.error("Failed to launch extension:", error);
     }
   };
 
+  // Keep a simple check status function for manual checks
   const checkStatus = useCallback(async () => {
-    if (
-      isCheckingStatus ||
-      flowState === "valid" ||
-      flowState === "transaction-pending"
-    )
-      return;
+    if (isCheckingStatus) return;
     setIsCheckingStatus(true);
+
     try {
-      const state = await KeyringConnect.getExtensionState();
-
-      if (!state) {
-        setFlowState("install");
-        if (statusCheckIntervalRef.current) {
-          clearInterval(statusCheckIntervalRef.current);
-          statusCheckIntervalRef.current = null;
-        }
-        return;
-      }
-
-      // Check if user exists and attestation is ready
-      if (state.credentialData) {
-        if (statusCheckIntervalRef.current) {
-          clearInterval(statusCheckIntervalRef.current);
-          statusCheckIntervalRef.current = null;
-        }
-        setFlowState("calldata-ready");
-        setCalldata(state.credentialData);
-      }
+      await KeyringConnect.getExtensionState();
+      // Subscription will handle the state updates
     } catch (error) {
       console.error("Failed to check status:", error);
     } finally {
@@ -144,23 +135,7 @@ export function KeyringConnectModule({
         setIsCheckingStatus(false);
       }, 1500);
     }
-  }, [isCheckingStatus, flowState, setFlowState, setCalldata]);
-
-  // Update startStatusChecks to use the ref
-  const startStatusChecks = useCallback(() => {
-    if (statusCheckIntervalRef.current) {
-      clearInterval(statusCheckIntervalRef.current);
-    }
-
-    const intervalId = setInterval(checkStatus, 3000);
-    statusCheckIntervalRef.current = intervalId;
-
-    checkStatus();
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [checkStatus]);
+  }, [isCheckingStatus]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -173,20 +148,6 @@ export function KeyringConnectModule({
       setCalldata(null);
     }
   }, [address, chainId]);
-
-  // Clear interval when we reach states where checking is no longer needed
-  useEffect(() => {
-    if (
-      flowState === "calldata-ready" ||
-      flowState === "transaction-pending" ||
-      flowState === "valid"
-    ) {
-      if (statusCheckIntervalRef.current) {
-        clearInterval(statusCheckIntervalRef.current);
-        statusCheckIntervalRef.current = null;
-      }
-    }
-  }, [flowState]);
 
   if (!isMounted || !flowState) return null;
 
@@ -253,10 +214,6 @@ export function KeyringConnectModule({
                   <Button
                     variant="ghost"
                     onClick={() => {
-                      if (statusCheckIntervalRef.current) {
-                        clearInterval(statusCheckIntervalRef.current);
-                        statusCheckIntervalRef.current = null;
-                      }
                       setFlowState("start");
                     }}
                   >
