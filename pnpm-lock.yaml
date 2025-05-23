@@ -10,9 +10,12 @@ importers:
 
   examples/keyring-connect-xlend:
     dependencies:
+      '@keyringnetwork/contracts-abi':
+        specifier: ^2.2.1
+        version: 2.2.1
       '@keyringnetwork/keyring-connect-sdk':
-        specifier: ^2.0.1
-        version: 2.0.1
+        specifier: ^2.1.1
+        version: 2.1.1
       '@radix-ui/react-dropdown-menu':
         specifier: ^2.1.12
         version: 2.1.12(@types/react-dom@19.1.2)(@types/react@19.1.2)(react-dom@19.1.0)(react@19.1.0)
@@ -955,8 +958,18 @@ packages:
       merkletreejs: 0.3.11
     dev: false
 
-  /@keyringnetwork/keyring-connect-sdk@2.0.1:
-    resolution: {integrity: sha512-nSBG4ufboiIAPHEIcL8/Ivp+GH1jJE+wfNgg/75m6EligRNt056ZhHrzujkW+noM6LXLKIATw41Wyz+EMO1YBw==}
+  /@keyringnetwork/contracts-abi@2.2.0:
+    resolution: {integrity: sha512-4Q0AmkajyMr+aC1TbuU1L2D/kw6vO838k/ssONp8exhAZL+FY3DbXjrzFbFeDz2yznXwUUO3Myl8KDkqjUpUBA==}
+    dev: false
+
+  /@keyringnetwork/contracts-abi@2.2.1:
+    resolution: {integrity: sha512-M0gtW/vtQGFrPw4ff0AbloVXbKMo5vOCu5choAIVEamKKvoOoiEL6tysGxpwtbJ1GfEuRW9wrLLIGlkqaoJLNA==}
+    dev: false
+
+  /@keyringnetwork/keyring-connect-sdk@2.1.1:
+    resolution: {integrity: sha512-Hka45A2M9fy1YhQTJDn1LiXGFFlFM4PtgkCrVH5Douw7XGLjprT7Jjq3KYvrqHu3hNN2rQBX+q+dFOkoM8CnxA==}
+    dependencies:
+      '@keyringnetwork/contracts-abi': 2.2.0
     dev: false
 
   /@lit-labs/ssr-dom-shim@1.3.0:
