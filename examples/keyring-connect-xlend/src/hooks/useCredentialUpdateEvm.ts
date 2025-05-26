@@ -21,7 +21,7 @@ interface CredentialUpdateResponse {
   simulationError: string | null;
 }
 
-export const useCredentialUpdate = ({
+export const useCredentialUpdateEvm = ({
   calldata,
   onTransactionPending,
 }: CredentialUpdateProps): CredentialUpdateResponse => {
