@@ -36,6 +36,17 @@ export function KeyringConnectModule({
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
+  const validCredentialData = useCallback(
+    (credentialData: CredentialData): boolean => {
+      return (
+        credentialData.trader === address &&
+        credentialData.policyId === policyId &&
+        credentialData.chainId === chainId
+      );
+    },
+    [address, policyId, chainId]
+  );
+
   // Update flow if user has no credential
   useEffect(() => {
     if (flowState !== "no-credential") return;
@@ -47,12 +58,7 @@ export function KeyringConnectModule({
       } else {
         const { credentialData } =
           (await KeyringConnect.getExtensionState()) || {};
-        if (
-          credentialData &&
-          credentialData.trader === address &&
-          credentialData.policyId === policyId &&
-          credentialData.chainId === chainId
-        ) {
+        if (credentialData && validCredentialData(credentialData)) {
           setCalldata(credentialData);
           setFlowState("calldata-ready");
         } else {
@@ -63,7 +69,14 @@ export function KeyringConnectModule({
     };
 
     updateFlowState();
-  }, [flowState, setFlowState, address, policyId, chainId]);
+  }, [
+    flowState,
+    setFlowState,
+    address,
+    policyId,
+    chainId,
+    validCredentialData,
+  ]);
 
   // Subscribe to the extension state changes
   useEffect(() => {
@@ -73,16 +86,18 @@ export function KeyringConnectModule({
         return;
       }
 
-      if (state?.credentialData) {
+      const { credentialData } = state;
+
+      if (credentialData && validCredentialData(credentialData)) {
         setFlowState("calldata-ready");
-        setCalldata(state.credentialData);
+        setCalldata(credentialData);
       }
     });
 
     return unsubscribe; // Cleanup on unmount
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [validCredentialData]);
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
