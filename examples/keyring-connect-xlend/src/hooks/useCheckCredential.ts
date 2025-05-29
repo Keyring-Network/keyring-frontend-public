@@ -1,4 +1,7 @@
-import { KEYRING_CONTRACT_ABI, getKeyringContractAddress } from "@/constant";
+import {
+  getKrnDeploymentArtifact,
+  KrnSupportedChainId,
+} from "@keyringnetwork/contracts-abi";
 import { useMemo } from "react";
 import { useAccount, useChains } from "wagmi";
 import { useReadContract } from "wagmi";
@@ -13,9 +16,15 @@ type CheckCredentialResult = {
 export const useCheckCredential = (policyId: number): CheckCredentialResult => {
   const { address, chainId } = useAccount();
   const chains = useChains();
+
+  const contract = getKrnDeploymentArtifact({
+    chainId: chainId as KrnSupportedChainId,
+    env: "dev", // NOTE: only for development purposes, env should be removed in production
+  });
+
   const { data, isPending, isError, error, refetch } = useReadContract({
-    address: getKeyringContractAddress(chainId) as `0x${string}`,
-    abi: KEYRING_CONTRACT_ABI,
+    address: contract.address as `0x${string}`,
+    abi: contract.ABI,
     functionName: "checkCredential",
     args: [address!, policyId],
     query: {
