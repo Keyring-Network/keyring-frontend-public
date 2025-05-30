@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ReownProvider from "@/components/providers/ReownProvider";
-import { WalletModal } from "@/components/wallet/WalletModal";
 import { Toaster } from "@/components/ui/sonner";
 import { headers } from "next/headers";
 
@@ -39,7 +38,6 @@ export default async function RootLayout({
           <TooltipProvider>
             <main className="h-full">{children}</main>
             <Toaster theme="light" />
-            <WalletModal />
           </TooltipProvider>
         </ReownProvider>
       </body>
