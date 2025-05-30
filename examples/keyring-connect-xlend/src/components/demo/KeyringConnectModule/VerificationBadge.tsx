@@ -9,9 +9,13 @@ import { Loader } from "lucide-react";
 import Image from "next/image";
 interface VerificationBadgeProps {
   flowState: FlowState | null;
+  credentialExpired: boolean;
 }
 
-export const VerificationBadge = ({ flowState }: VerificationBadgeProps) => {
+export const VerificationBadge = ({
+  flowState,
+  credentialExpired,
+}: VerificationBadgeProps) => {
   const isVerified = flowState === "valid";
   const isLoading = flowState === "loading";
 
@@ -31,6 +35,8 @@ export const VerificationBadge = ({ flowState }: VerificationBadgeProps) => {
               ? "Checking..."
               : isVerified
               ? "Access Granted"
+              : credentialExpired
+              ? "Access Expired"
               : "Verification Required"}
             {isVerified && (
               <div className="h-5 w-5 bg-green-500 rounded-full flex items-center justify-center ml-1">

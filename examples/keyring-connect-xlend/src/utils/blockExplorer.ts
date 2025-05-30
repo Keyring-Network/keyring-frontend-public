@@ -10,7 +10,7 @@ export const createBlockExplorerAction = (txHash: string, chainId?: number) => {
   return {
     label: "Inspect",
     onClick: () => {
-      window.open(explorerUrl, "_blank");
+      window.open(`${explorerUrl}/tx/${txHash}`, "_blank");
     },
   };
 };

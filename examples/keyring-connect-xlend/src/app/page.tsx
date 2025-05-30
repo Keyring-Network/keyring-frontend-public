@@ -51,6 +51,7 @@ export default function KeyringConnectDemo() {
         setFlowState("valid");
         break;
       case "no-credential":
+      case "expired":
         setFlowState("no-credential");
         break;
     }
@@ -75,7 +76,10 @@ export default function KeyringConnectDemo() {
       <AppHeader />
       <div className="flex justify-center items-center py-8 px-4">
         <div className="w-full max-w-xl">
-          <VerificationBadge flowState={flowState} />
+          <VerificationBadge
+            flowState={flowState}
+            credentialExpired={credentialStatus === "expired"}
+          />
 
           <Card className="bg-white rounded-xl shadow-lg overflow-hidden">
             <CardContent className="p-4 pb-0">
@@ -88,6 +92,7 @@ export default function KeyringConnectDemo() {
                 setFlowState={setFlowState}
                 address={address}
                 caipNetworkId={caipNetworkId}
+                credentialExpired={credentialStatus === "expired"}
               />
 
               <CtaMock flowState={flowState} />
