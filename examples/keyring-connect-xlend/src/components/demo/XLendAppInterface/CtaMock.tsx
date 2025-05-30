@@ -2,8 +2,7 @@
 
 import { FlowState } from "@/app/page";
 import { Button } from "@/components/ui/button";
-import { useAppKit } from "@reown/appkit/react";
-import { useAccount } from "wagmi";
+import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 
 interface CtaMockProps {
   flowState: FlowState | null;
@@ -13,7 +12,7 @@ export const CtaMock = ({ flowState }: CtaMockProps) => {
   const isVerified = flowState === "valid";
   const isLoading = flowState === "loading";
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useAppKitAccount();
   const { open } = useAppKit();
 
   if (!isConnected) {

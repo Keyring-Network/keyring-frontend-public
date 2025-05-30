@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useCredentialUpdateEvm } from "@/hooks/useCredentialUpdateEvm";
+import { useCredentialUpdate } from "@/hooks/useCredentialUpdate";
 import { CredentialData } from "@keyringnetwork/keyring-connect-sdk";
 
 interface CredentialUpdateProps {
@@ -11,8 +11,8 @@ export const CredentialUpdate = ({
   calldata,
   onTransactionPending,
 }: CredentialUpdateProps) => {
-  const { writeWithWallet, isSimulating, simulationError, isPending } =
-    useCredentialUpdateEvm({
+  const { writeWithWallet, isSimulating, simulationError, isWalletUpdating } =
+    useCredentialUpdate({
       calldata,
       onTransactionPending,
     });
@@ -21,10 +21,10 @@ export const CredentialUpdate = ({
     <>
       <Button
         className="mt-3"
-        disabled={!writeWithWallet || isPending}
+        disabled={!writeWithWallet || isWalletUpdating}
         onClick={writeWithWallet}
       >
-        {isPending
+        {isWalletUpdating
           ? "Pending..."
           : isSimulating
           ? "Simulating..."

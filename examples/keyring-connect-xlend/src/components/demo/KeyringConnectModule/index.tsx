@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   KeyringConnect,
@@ -12,10 +12,12 @@ import { FlowState } from "@/app/page";
 import { KeyringLogo } from "@/components/ui/keyring-logo";
 import { CredentialUpdate } from "./CredentialUpdate";
 import { KrnSupportedChainId } from "@keyringnetwork/contracts-abi";
+import { CaipNetworkId } from "@reown/appkit";
+import { getChainIdFromCaipNetworkId } from "@/lib/utils";
 interface KeyringConnectModuleProps {
   policyId: number;
-  address?: `0x${string}`;
-  chainId?: number;
+  address?: string;
+  caipNetworkId?: CaipNetworkId;
   flowState: FlowState | null;
   setFlowState: (flowState: FlowState) => void;
 }
@@ -28,13 +30,17 @@ interface KeyringConnectModuleProps {
 export function KeyringConnectModule({
   policyId,
   address,
-  chainId,
+  caipNetworkId,
   flowState,
   setFlowState,
 }: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+
+  const chainId = useMemo(() => {
+    return getChainIdFromCaipNetworkId(caipNetworkId);
+  }, [caipNetworkId]);
 
   const validCredentialData = useCallback(
     (credentialData: CredentialData): boolean => {

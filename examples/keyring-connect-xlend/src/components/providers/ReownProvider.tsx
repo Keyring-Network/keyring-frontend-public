@@ -38,6 +38,7 @@ export const modal = createAppKit({
     email: false,
     onramp: false,
     socials: false,
+    history: false,
   },
   themeVariables: {
     "--w3m-accent": "#000000",

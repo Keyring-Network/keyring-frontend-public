@@ -44,3 +44,6 @@ export const wagmiAdapter = new WagmiAdapter({
 export const solanaWeb3JsAdapter = new SolanaAdapter();
 
 export const config = wagmiAdapter.wagmiConfig;
+
+export const DEPLOYMENT_ENVIRONMENT =
+  process.env.NEXT_PUBLIC_DEPLOYMENT_ENVIRONMENT === "prod" ? "prod" : "dev";
