@@ -1,4 +1,3 @@
-import { getKeyringContractAddress, KEYRING_CONTRACT_ABI } from "@/constant";
 import { CredentialData } from "@keyringnetwork/keyring-connect-sdk";
 import { useEffect, useState } from "react";
 import {
@@ -8,27 +7,49 @@ import {
 } from "wagmi";
 import { useCheckCredential } from "./useCheckCredential";
 import { toast } from "sonner";
+import {
+  getKrnDeploymentArtifact,
+  KrnSupportedChainId,
+} from "@keyringnetwork/contracts-abi";
+import { Loader } from "lucide-react";
+import { createBlockExplorerAction } from "@/utils/blockExplorer";
+import { DEPLOYMENT_ENVIRONMENT } from "@/config";
 
 interface CredentialUpdateProps {
   calldata: CredentialData;
   onTransactionPending: () => void;
+  enabled: boolean;
 }
 
 interface CredentialUpdateResponse {
   writeWithWallet: (() => void) | undefined;
-  isPending: boolean;
+  isWalletUpdating: boolean;
   isSimulating: boolean;
   simulationError: string | null;
 }
 
-export const useCredentialUpdate = ({
+export const useCredentialUpdateEvm = ({
   calldata,
   onTransactionPending,
+  enabled,
 }: CredentialUpdateProps): CredentialUpdateResponse => {
   const [hash, setHash] = useState<`0x${string}`>();
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationError, setSimulationError] = useState<string | null>(null);
+  const [pendingToastId, setPendingToastId] = useState<string | number | null>(
+    null
+  );
   const { refetch: refetchCredential } = useCheckCredential(calldata.policyId);
+
+  const contract = enabled
+    ? getKrnDeploymentArtifact({
+        chainId: calldata.chainId as KrnSupportedChainId,
+        env: DEPLOYMENT_ENVIRONMENT, // NOTE: only for development purposes, env should be removed in production
+      })
+    : {
+        address: "",
+        ABI: [],
+      };
 
   const {
     data,
@@ -36,7 +57,7 @@ export const useCredentialUpdate = ({
     status: simulateContractStatus,
   } = useSimulateContract({
     functionName: "createCredential",
-    abi: KEYRING_CONTRACT_ABI,
+    abi: contract.ABI,
     value: BigInt(calldata.cost),
     args: [
       calldata.trader,
@@ -48,7 +69,7 @@ export const useCredentialUpdate = ({
       calldata.signature as `0x${string}`,
       calldata.backdoor as `0x${string}`,
     ],
-    address: getKeyringContractAddress(calldata.chainId) as `0x${string}`,
+    address: contract.address as `0x${string}`,
   });
 
   const { writeContract, isPending: isPendingContractWrite } = useWriteContract(
@@ -57,18 +78,15 @@ export const useCredentialUpdate = ({
         onSuccess(data) {
           setHash(data);
           onTransactionPending();
-          toast("Transaction pending", {
+          const toastId = toast("Transaction pending", {
             style: {
               backgroundColor: "white",
             },
+            icon: <Loader className="h-3 w-3 animate-spin" />,
             duration: Infinity,
-            action: {
-              label: "Inspect",
-              onClick: () => {
-                window.open(`https://etherscan.io/tx/${data}`, "_blank");
-              },
-            },
+            action: createBlockExplorerAction(data, calldata.chainId),
           });
+          setPendingToastId(toastId);
         },
       },
     }
@@ -116,6 +134,11 @@ export const useCredentialUpdate = ({
   useEffect(() => {
     if (!transactionReceipt) return;
 
+    if (pendingToastId) {
+      toast.dismiss(pendingToastId);
+      setPendingToastId(null);
+    }
+
     if (transactionReceiptStatus === "success") {
       if (transactionReceipt?.status !== "reverted") {
         refetchCredential();
@@ -124,6 +147,9 @@ export const useCredentialUpdate = ({
             backgroundColor: "white",
           },
           duration: Infinity,
+          action: hash
+            ? createBlockExplorerAction(hash, calldata.chainId)
+            : undefined,
         });
       } else {
         toast.error("Transaction reverted", {
@@ -135,6 +161,10 @@ export const useCredentialUpdate = ({
     }
 
     if (transactionReceiptStatus === "error") {
+      if (pendingToastId) {
+        toast.dismiss(pendingToastId);
+        setPendingToastId(null);
+      }
       toast.error("Transaction failed", {
         style: {
           backgroundColor: "white",
@@ -151,7 +181,7 @@ export const useCredentialUpdate = ({
 
   return {
     writeWithWallet: isWriteEnabled ? handleWrite : undefined,
-    isPending,
+    isWalletUpdating: isPending,
     isSimulating,
     simulationError,
   };

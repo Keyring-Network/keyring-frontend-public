@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   KeyringConnect,
@@ -12,11 +12,14 @@ import { FlowState } from "@/app/page";
 import { KeyringLogo } from "@/components/ui/keyring-logo";
 import { CredentialUpdate } from "./CredentialUpdate";
 import { KrnSupportedChainId } from "@keyringnetwork/contracts-abi";
+import { CaipNetworkId } from "@reown/appkit";
+import { getChainIdFromCaipNetworkId } from "@/lib/utils";
 interface KeyringConnectModuleProps {
   policyId: number;
-  address?: `0x${string}`;
-  chainId?: number;
+  address?: string;
+  caipNetworkId?: CaipNetworkId;
   flowState: FlowState | null;
+  credentialExpired: boolean;
   setFlowState: (flowState: FlowState) => void;
 }
 
@@ -28,15 +31,32 @@ interface KeyringConnectModuleProps {
 export function KeyringConnectModule({
   policyId,
   address,
-  chainId,
+  caipNetworkId,
   flowState,
+  credentialExpired,
   setFlowState,
 }: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
-  // Update flow if user has no credential
+  console.log({ credentialExpired });
+  const chainId = useMemo(() => {
+    return getChainIdFromCaipNetworkId(caipNetworkId);
+  }, [caipNetworkId]);
+
+  const validCredentialData = useCallback(
+    (credentialData: CredentialData): boolean => {
+      return (
+        credentialData.trader === address &&
+        credentialData.policyId === policyId &&
+        credentialData.chainId === chainId
+      );
+    },
+    [address, policyId, chainId]
+  );
+
+  // Update flow if user has no valid credential
   useEffect(() => {
     if (flowState !== "no-credential") return;
 
@@ -47,12 +67,7 @@ export function KeyringConnectModule({
       } else {
         const { credentialData } =
           (await KeyringConnect.getExtensionState()) || {};
-        if (
-          credentialData &&
-          credentialData.trader === address &&
-          credentialData.policyId === policyId &&
-          credentialData.chainId === chainId
-        ) {
+        if (credentialData && validCredentialData(credentialData)) {
           setCalldata(credentialData);
           setFlowState("calldata-ready");
         } else {
@@ -63,7 +78,14 @@ export function KeyringConnectModule({
     };
 
     updateFlowState();
-  }, [flowState, setFlowState, address, policyId, chainId]);
+  }, [
+    flowState,
+    setFlowState,
+    address,
+    policyId,
+    chainId,
+    validCredentialData,
+  ]);
 
   // Subscribe to the extension state changes
   useEffect(() => {
@@ -73,16 +95,18 @@ export function KeyringConnectModule({
         return;
       }
 
-      if (state?.credentialData) {
+      const { credentialData } = state;
+
+      if (credentialData && validCredentialData(credentialData)) {
         setFlowState("calldata-ready");
-        setCalldata(state.credentialData);
+        setCalldata(credentialData);
       }
     });
 
     return unsubscribe; // Cleanup on unmount
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [validCredentialData]);
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
@@ -184,13 +208,19 @@ export function KeyringConnectModule({
             {flowState === "start" && (
               <>
                 <h3 className="font-medium text-gray-900">
-                  Verification Required
+                  {credentialExpired
+                    ? "Credential Renewal Required"
+                    : "Verification Required"}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Verify your identity to access lending features.
+                  {credentialExpired
+                    ? "Renew your credential to access lending features."
+                    : "Verify your identity to access lending features."}
                 </p>
                 <Button className="mt-3" onClick={launchExtension}>
-                  Start Verification
+                  {credentialExpired
+                    ? "Refresh Credential"
+                    : "Start Verification"}
                 </Button>
               </>
             )}
@@ -198,10 +228,14 @@ export function KeyringConnectModule({
             {flowState === "progress" && (
               <>
                 <h3 className="font-medium text-gray-900">
-                  Verification In Progress
+                  {credentialExpired
+                    ? "Credential Renewal In Progress"
+                    : "Verification In Progress"}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  After the verification you can continue here.
+                  {credentialExpired
+                    ? "Transaction will be prepared in the Keyring extension."
+                    : "After the verification you can continue here."}
                 </p>
                 <div className="flex gap-2 justify-between mt-3">
                   <Button
@@ -228,10 +262,14 @@ export function KeyringConnectModule({
               calldata && (
                 <>
                   <h3 className="font-medium text-gray-900">
-                    Credential Update
+                    {credentialExpired
+                      ? "Credential Refresh"
+                      : "Credential Update"}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Transaction ready to create the on-chain credential
+                    {credentialExpired
+                      ? "Transaction ready to renew the on-chain credential"
+                      : "Transaction ready to create the on-chain credential"}
                   </p>
                   <CredentialUpdate
                     calldata={calldata}

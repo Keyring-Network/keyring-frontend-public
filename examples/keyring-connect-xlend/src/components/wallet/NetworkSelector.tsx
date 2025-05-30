@@ -1,21 +1,20 @@
 import { useState } from "react";
-import { useAccount, useSwitchChain, useChainId, useChains } from "wagmi";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronDown } from "lucide-react";
+import { useEffect } from "react";
+import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, Check } from "lucide-react";
-import { useEffect } from "react";
+import { networks } from "@/config";
 
 export function NetworkSelector() {
   const [isMounted, setIsMounted] = useState(false);
-  const { isConnected } = useAccount();
-  const { switchChain, isPending: isSwitchPending } = useSwitchChain();
-  const chainId = useChainId();
-  const chains = useChains();
+  const { isConnected } = useAppKitAccount();
+  const { caipNetwork, caipNetworkId, switchNetwork } = useAppKitNetwork();
 
   useEffect(() => {
     setIsMounted(true);
@@ -29,25 +28,21 @@ export function NetworkSelector() {
         <Button
           variant="outline"
           className="rounded-full bg-blue-500 text-white border-blue-500 flex items-center gap-2"
-          disabled={isSwitchPending}
         >
-          {isSwitchPending
-            ? "Switching..."
-            : chains.find((chain) => chain.id === chainId)?.name ||
-              "Select Network"}
+          {caipNetwork?.name || "Select Network"}
           <ChevronDown className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {chains.map((chain) => (
+        {networks.map((network) => (
           <DropdownMenuItem
-            key={chain.id}
-            disabled={chainId === chain.id}
+            key={network.id}
+            disabled={caipNetworkId === network.id}
             className="flex items-center justify-between cursor-pointer"
-            onClick={() => switchChain({ chainId: chain.id })}
+            onClick={() => switchNetwork(network)}
           >
-            <span>{chain.name}</span>
-            {chainId === chain.id && (
+            <span>{network.name}</span>
+            {caipNetworkId === network.id && (
               <Check className="h-4 w-4 text-blue-500" />
             )}
           </DropdownMenuItem>

@@ -8,8 +8,8 @@ import { CtaMock } from "@/components/demo/XLendAppInterface/CtaMock";
 import { useEffect, useState } from "react";
 import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
-import { useAccount } from "wagmi";
 import { KeyringConnectModule } from "@/components/demo/KeyringConnectModule";
+import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 
 export type FlowState =
   | "loading"
@@ -25,7 +25,8 @@ export type FlowState =
 export default function KeyringConnectDemo() {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
-  const { address, chainId } = useAccount();
+  const { address } = useAppKitAccount();
+  const { caipNetworkId } = useAppKitNetwork();
 
   // NOTE: Must be set to the same policyId used on-chain, for now hardcoded to test policy
   const POLICY_ID = 7;
@@ -50,6 +51,7 @@ export default function KeyringConnectDemo() {
         setFlowState("valid");
         break;
       case "no-credential":
+      case "expired":
         setFlowState("no-credential");
         break;
     }
@@ -74,7 +76,10 @@ export default function KeyringConnectDemo() {
       <AppHeader />
       <div className="flex justify-center items-center py-8 px-4">
         <div className="w-full max-w-xl">
-          <VerificationBadge flowState={flowState} />
+          <VerificationBadge
+            flowState={flowState}
+            credentialExpired={credentialStatus === "expired"}
+          />
 
           <Card className="bg-white rounded-xl shadow-lg overflow-hidden">
             <CardContent className="p-4 pb-0">
@@ -86,7 +91,8 @@ export default function KeyringConnectDemo() {
                 flowState={flowState}
                 setFlowState={setFlowState}
                 address={address}
-                chainId={chainId}
+                caipNetworkId={caipNetworkId}
+                credentialExpired={credentialStatus === "expired"}
               />
 
               <CtaMock flowState={flowState} />

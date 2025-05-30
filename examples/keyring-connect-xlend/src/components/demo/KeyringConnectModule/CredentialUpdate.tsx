@@ -11,7 +11,7 @@ export const CredentialUpdate = ({
   calldata,
   onTransactionPending,
 }: CredentialUpdateProps) => {
-  const { writeWithWallet, isSimulating, simulationError, isPending } =
+  const { writeWithWallet, isSimulating, simulationError, isWalletUpdating } =
     useCredentialUpdate({
       calldata,
       onTransactionPending,
@@ -21,10 +21,10 @@ export const CredentialUpdate = ({
     <>
       <Button
         className="mt-3"
-        disabled={!writeWithWallet || isPending}
+        disabled={!writeWithWallet || isWalletUpdating}
         onClick={writeWithWallet}
       >
-        {isPending
+        {isWalletUpdating
           ? "Pending..."
           : isSimulating
           ? "Simulating..."
