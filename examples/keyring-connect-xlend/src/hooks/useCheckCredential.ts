@@ -27,16 +27,6 @@ export const useCheckCredential = (policyId: number): CheckCredentialResult => {
 
   const isSolanaConnected = caipNetworkId?.startsWith("solana");
 
-  console.log("credential status", {
-    caipNetworkId,
-    statusEvm,
-    statusSolana,
-    errorEvm,
-    errorSolana,
-    hasValidCredentialEvm,
-    hasValidCredentialSolana,
-  });
-
   return {
     hasValidCredential: isSolanaConnected
       ? hasValidCredentialSolana

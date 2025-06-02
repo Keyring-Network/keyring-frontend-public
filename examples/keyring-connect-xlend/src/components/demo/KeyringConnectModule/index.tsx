@@ -40,7 +40,6 @@ export function KeyringConnectModule({
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
-  console.log({ credentialExpired });
   const chainId = useMemo(() => {
     return getChainIdFromCaipNetworkId(caipNetworkId);
   }, [caipNetworkId]);

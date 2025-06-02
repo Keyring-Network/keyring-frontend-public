@@ -155,15 +155,6 @@ export const useCredentialUpdateSolana = ({
         // Create payload for credential update
         const payload = credentialUpdatePayload(credentialData, trader);
 
-        console.log({
-          payload,
-          programState,
-          signer: trader,
-          keyMapping,
-          entityMapping,
-          systemProgram: SystemProgram.programId,
-        });
-
         const transaction = await program.methods
           .createCredential(...payload)
           .accountsStrict({

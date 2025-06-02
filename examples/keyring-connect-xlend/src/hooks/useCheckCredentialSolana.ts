@@ -48,7 +48,7 @@ export const useCheckCredentialSolana = (
 
       // Fetch entity expiration data
       const entityData = await getEntityExp(policyId, publicKey, connection);
-      console.log("entityData", entityData);
+
       // Extract expiry timestamp or use 0 if not found
       const expiryTimestamp = entityData
         ? Number(entityData.exp.toString())
@@ -112,15 +112,6 @@ export const useCheckCredentialSolana = (
     await queryClient.resetQueries({ queryKey });
     return refetch();
   }, [queryKey, refetch, queryClient]);
-
-  console.log("credential status", {
-    status,
-    error,
-    address,
-    caipNetworkId,
-    hasValidCredential,
-    expiryTimestamp: data?.expiryTimestamp,
-  });
 
   return {
     hasValidCredential,

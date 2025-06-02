@@ -67,15 +67,6 @@ export const useCheckCredentialEvm = (
     }
   }, [isEnabled, data, isPending, isError]);
 
-  console.log("credential status EVM", {
-    status,
-    error,
-    address,
-    caipNetworkId,
-    hasValidCredential,
-    expiryTimestamp: data ? Number(data) : undefined,
-  });
-
   return {
     hasValidCredential,
     status,
