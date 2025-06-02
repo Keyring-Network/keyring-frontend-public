@@ -1,4 +1,11 @@
-import { ExternalLink, Code2, Github, BookOpen, X } from "lucide-react";
+import {
+  ExternalLink,
+  Code2,
+  Github,
+  BookOpen,
+  X,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import {
@@ -107,16 +114,9 @@ export const KeyringConnectLinks = () => {
               Active Test Policy
             </p>
             <DropdownMenu>
-              <DropdownMenuTrigger className="w-full">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="w-full justify-start gap-2 h-8 text-xs text-white hover:bg-firefly-100"
-                >
-                  <span className="flex-1 text-left">
-                    {selectedPolicy?.name || "Select Policy"}
-                  </span>
-                </Button>
+              <DropdownMenuTrigger className="w-full items-center p-2 justify-between flex gap-2 h-8 text-xs text-white hover:text-firefly hover:bg-firefly-100 rounded-md">
+                {selectedPolicy?.name || "Select Policy"}
+                <ChevronRight className="w-3 h-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuLabel>Select Policy</DropdownMenuLabel>
@@ -127,7 +127,7 @@ export const KeyringConnectLinks = () => {
                   >
                     {policy.name}
                     {policy.id === policyId ? (
-                      <div className="w-2 h-2 bg-teal rounded-full" />
+                      <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
                     ) : null}
                   </DropdownMenuItem>
                 ))}
