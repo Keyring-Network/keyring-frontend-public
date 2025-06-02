@@ -88,6 +88,8 @@ export function KeyringConnectModule({
 
   // Subscribe to the extension state changes
   useEffect(() => {
+    if (flowState !== "no-credential") return;
+
     const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
       if (!state) {
         setFlowState("install");
@@ -105,7 +107,7 @@ export function KeyringConnectModule({
     return unsubscribe; // Cleanup on unmount
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validCredentialData]);
+  }, [validCredentialData, flowState]);
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
