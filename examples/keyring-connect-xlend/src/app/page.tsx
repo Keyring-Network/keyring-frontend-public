@@ -11,6 +11,7 @@ import { VerificationBadge } from "@/components/demo/KeyringConnectModule/Verifi
 import { KeyringConnectModule } from "@/components/demo/KeyringConnectModule";
 import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import { KeyringConnectLinks } from "@/components/demo/KeyringConnectModule/KeyringConnectLinks";
+import { usePolicyStore } from "@/hooks/store/usePolicyStore";
 
 export type FlowState =
   | "loading"
@@ -28,11 +29,9 @@ export default function KeyringConnectDemo() {
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
+  const { policyId } = usePolicyStore();
 
-  // NOTE: Must be set to the same policyId used on-chain, for now hardcoded to test policy
-  const POLICY_ID = 7;
-
-  const { status: credentialStatus, error } = useCheckCredential(POLICY_ID);
+  const { status: credentialStatus, error } = useCheckCredential(policyId);
 
   // Update flow state based on credential status
   useEffect(() => {
@@ -88,7 +87,7 @@ export default function KeyringConnectDemo() {
               <LendingFormMock activeTab="install" />
 
               <KeyringConnectModule
-                policyId={POLICY_ID}
+                policyId={policyId}
                 flowState={flowState}
                 setFlowState={setFlowState}
                 address={address}

@@ -1,9 +1,50 @@
 import { ExternalLink, Code2, Github, BookOpen, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { usePolicyStore } from "@/hooks/store/usePolicyStore";
+
+const POLICIES = [
+  {
+    name: "Keyring Connect Test",
+    id: 7,
+  },
+  {
+    name: "Bastion Trading",
+    id: 20,
+  },
+  {
+    name: "Fasanara Digital",
+    id: 4,
+  },
+  {
+    name: "Kamino",
+    id: 883371,
+  },
+  {
+    name: "Euler",
+    id: 6565519,
+  },
+  {
+    name: "USP",
+    id: 2293283,
+  },
+  {
+    name: "TruFin",
+    id: 7975434,
+  },
+];
 
 export const KeyringConnectLinks = () => {
   const [isVisible, setIsVisible] = useState(true);
+  const { policyId, setPolicyId } = usePolicyStore();
+  const selectedPolicy = POLICIES.find((p) => p.id === policyId);
 
   if (!isVisible) return null;
 
@@ -60,6 +101,39 @@ export const KeyringConnectLinks = () => {
             <span className="flex-1 text-left">SDK Docs</span>
             <ExternalLink className="w-3 h-3" />
           </Button>
+
+          <div className="mt-2">
+            <p className="text-xs text-white/70 mb-1 mt-4">
+              Active Test Policy
+            </p>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="w-full">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full justify-start gap-2 h-8 text-xs text-white hover:bg-firefly-100"
+                >
+                  <span className="flex-1 text-left">
+                    {selectedPolicy?.name || "Select Policy"}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Select Policy</DropdownMenuLabel>
+                {POLICIES.map((policy) => (
+                  <DropdownMenuItem
+                    key={policy.id}
+                    onClick={() => setPolicyId(policy.id)}
+                  >
+                    {policy.name}
+                    {policy.id === policyId ? (
+                      <div className="w-2 h-2 bg-teal rounded-full" />
+                    ) : null}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </div>
