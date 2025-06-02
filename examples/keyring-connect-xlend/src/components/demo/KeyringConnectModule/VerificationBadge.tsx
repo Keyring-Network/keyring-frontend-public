@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { Loader } from "lucide-react";
 import Image from "next/image";
 interface VerificationBadgeProps {
@@ -25,9 +26,14 @@ export const VerificationBadge = ({
         <div className="w-full flex justify-start mb-6">
           <Badge
             variant="outline"
-            className={`bg-white rounded-full px-4 py-1 flex items-center gap-1 ${
-              isVerified ? "bg-green-100 text-green-800 border-green-200" : ""
-            }`}
+            className={cn(
+              "bg-white rounded-full px-4 py-1 flex items-center gap-1 ",
+              {
+                "bg-green-100 text-green-800 border-green-200": isVerified,
+                "bg-firefly-100 text-firefly border-firefly-500":
+                  credentialExpired,
+              }
+            )}
           >
             {!flowState
               ? "Permissioned by Keyring"
