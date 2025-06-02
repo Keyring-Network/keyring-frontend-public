@@ -10,6 +10,7 @@ import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
 import { KeyringConnectModule } from "@/components/demo/KeyringConnectModule";
 import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
+import { KeyringConnectLinks } from "@/components/demo/KeyringConnectModule/KeyringConnectLinks";
 
 export type FlowState =
   | "loading"
@@ -108,6 +109,7 @@ export default function KeyringConnectDemo() {
           </Card>
         </div>
       </div>
+      <KeyringConnectLinks />
     </div>
   );
 }
