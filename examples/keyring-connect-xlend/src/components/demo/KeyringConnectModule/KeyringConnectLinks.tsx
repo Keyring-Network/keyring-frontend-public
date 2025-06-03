@@ -22,30 +22,6 @@ const POLICIES = [
     name: "Keyring Connect Test",
     id: 7,
   },
-  {
-    name: "Bastion Trading",
-    id: 20,
-  },
-  {
-    name: "Fasanara Digital",
-    id: 4,
-  },
-  {
-    name: "Kamino",
-    id: 883371,
-  },
-  {
-    name: "Euler",
-    id: 6565519,
-  },
-  {
-    name: "USP",
-    id: 2293283,
-  },
-  {
-    name: "TruFin",
-    id: 7975434,
-  },
 ];
 
 export const KeyringConnectLinks = () => {
