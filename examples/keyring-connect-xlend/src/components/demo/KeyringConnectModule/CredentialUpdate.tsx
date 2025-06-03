@@ -14,16 +14,11 @@ export const CredentialUpdate = ({
 }: CredentialUpdateProps) => {
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
-  const {
-    writeWithWallet,
-    refetchSimulation,
-    isSimulating,
-    simulationError,
-    isWalletUpdating,
-  } = useCredentialUpdate({
-    calldata,
-    onTransactionPending,
-  });
+  const { writeWithWallet, refetchSimulation, isSimulating, simulationError } =
+    useCredentialUpdate({
+      calldata,
+      onTransactionPending,
+    });
 
   const buttonText = simulationError
     ? "Retry simulation"
