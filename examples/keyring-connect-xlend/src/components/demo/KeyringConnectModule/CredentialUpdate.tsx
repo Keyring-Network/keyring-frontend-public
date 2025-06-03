@@ -25,8 +25,6 @@ export const CredentialUpdate = ({
     onTransactionPending,
   });
 
-  console.log({ isSimulating, simulationError, isWalletUpdating });
-
   const buttonText = simulationError
     ? "Retry simulation"
     : isSimulating
