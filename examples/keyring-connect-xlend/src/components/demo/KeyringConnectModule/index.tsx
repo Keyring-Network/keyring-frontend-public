@@ -119,8 +119,7 @@ export function KeyringConnectModule({
     setIsMounted(true);
   }, []);
 
-  // Reset calldata when the account changes
-  // Could also work with a map of address -> calldata to avoid too strict garbage collection
+  // Reset calldata when the account or network changes
   useEffect(() => {
     if (address && chainId) {
       setCalldata(null);

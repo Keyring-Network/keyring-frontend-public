@@ -14,6 +14,7 @@ import {
 import { Loader } from "lucide-react";
 import { createBlockExplorerAction } from "@/utils/blockExplorer";
 import { DEPLOYMENT_ENVIRONMENT } from "@/config";
+import { useAppKitNetwork } from "@reown/appkit/react";
 
 interface CredentialUpdateProps {
   calldata: CredentialData;
@@ -41,10 +42,13 @@ export const useCredentialUpdateEvm = ({
     null
   );
   const { refetch: refetchCredential } = useCheckCredential(calldata.policyId);
+  const { chainId } = useAppKitNetwork();
+
+  const _chainId = (chainId || 1) as KrnSupportedChainId;
 
   const contract = enabled
     ? getKrnDeploymentArtifact({
-        chainId: calldata.chainId as KrnSupportedChainId,
+        chainId: _chainId,
         env: DEPLOYMENT_ENVIRONMENT, // NOTE: only for development purposes, env should be removed in production
       })
     : {
@@ -86,7 +90,7 @@ export const useCredentialUpdateEvm = ({
             },
             icon: <Loader className="h-3 w-3 animate-spin" />,
             duration: Infinity,
-            action: createBlockExplorerAction(data, calldata.chainId),
+            action: createBlockExplorerAction(data, _chainId),
           });
           setPendingToastId(toastId);
         },
@@ -154,9 +158,7 @@ export const useCredentialUpdateEvm = ({
             backgroundColor: "white",
           },
           duration: Infinity,
-          action: hash
-            ? createBlockExplorerAction(hash, calldata.chainId)
-            : undefined,
+          action: hash ? createBlockExplorerAction(hash, _chainId) : undefined,
         });
       } else {
         toast.error("Transaction reverted", {
