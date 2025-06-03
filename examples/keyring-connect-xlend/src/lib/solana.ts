@@ -9,9 +9,6 @@ import {
 } from "@keyringnetwork/contracts-abi";
 import { CredentialData } from "@keyringnetwork/keyring-connect-sdk";
 import { keccak_256 } from "@noble/hashes/sha3";
-// import { DeploymentEnvironment } from '@repo/constants';
-// import { handleError, Logger } from '@repo/helpers';
-// import { CredentialData } from '@repo/types';
 import { Connection, PublicKey } from "@solana/web3.js";
 
 interface GetProgramParams {
@@ -61,10 +58,10 @@ export const credentialUpdatePayload = (
     !key ||
     !signature
   ) {
-    // Logger.error('credentialUpdatePayload::missingRequiredFields', {
-    //   credentialData,
-    //   tradingAddress,
-    // });
+    console.error("credentialUpdatePayload::missingRequiredFields", {
+      credentialData,
+      tradingAddress,
+    });
     throw new Error("Missing required fields");
   }
 
@@ -164,8 +161,7 @@ export const getEntityExp = (
     const entityExp = program.account.entityData.fetch(entityMapping);
     return entityExp;
   } catch (e) {
-    console.error(e);
-    // handleError(e, 'getEntityExp');
+    console.error("getEntityExp", e);
     return null;
   }
 };
