@@ -62,6 +62,19 @@ export default function KeyringConnectDemo() {
     setIsMounted(true);
   }, []);
 
+  // Only mount KeyringConnectModule when user interaction is needed for verification
+  const shouldShowKeyringModule =
+    !!address &&
+    !!flowState &&
+    [
+      "no-credential",
+      "install",
+      "start",
+      "progress",
+      "calldata-ready",
+      "transaction-pending",
+    ].includes(flowState);
+
   // Only render client-side content after mounting
   if (!isMounted) {
     return (
@@ -86,14 +99,16 @@ export default function KeyringConnectDemo() {
               <LendingTabsMock />
               <LendingFormMock activeTab="install" />
 
-              <KeyringConnectModule
-                policyId={policyId}
-                flowState={flowState}
-                setFlowState={setFlowState}
-                address={address}
-                caipNetworkId={caipNetworkId}
-                credentialExpired={credentialStatus === "expired"}
-              />
+              {shouldShowKeyringModule && (
+                <KeyringConnectModule
+                  policyId={policyId}
+                  flowState={flowState}
+                  setFlowState={setFlowState}
+                  address={address}
+                  caipNetworkId={caipNetworkId}
+                  credentialExpired={credentialStatus === "expired"}
+                />
+              )}
 
               <CtaMock flowState={flowState} />
 

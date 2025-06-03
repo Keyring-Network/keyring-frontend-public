@@ -39,7 +39,6 @@ export function KeyringConnectModule({
 }: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
   const chainId = useMemo(() => {
     return getChainIdFromCaipNetworkId(caipNetworkId);
@@ -56,41 +55,8 @@ export function KeyringConnectModule({
     [address, policyId, chainId]
   );
 
-  // Update flow if user has no valid credential
-  useEffect(() => {
-    if (flowState !== "no-credential") return;
-
-    const updateFlowState = async () => {
-      const installed = await KeyringConnect.isKeyringConnectInstalled();
-      if (!installed) {
-        setFlowState("install");
-      } else {
-        const { credentialData } =
-          (await KeyringConnect.getExtensionState()) || {};
-        if (credentialData && validCredentialData(credentialData)) {
-          setCalldata(credentialData);
-          setFlowState("calldata-ready");
-        } else {
-          setCalldata(null);
-          setFlowState("start");
-        }
-      }
-    };
-
-    updateFlowState();
-  }, [
-    flowState,
-    setFlowState,
-    address,
-    policyId,
-    chainId,
-    validCredentialData,
-  ]);
-
   // Subscribe to the extension state changes
   useEffect(() => {
-    if (flowState !== "no-credential") return;
-
     const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
       if (!state) {
         setFlowState("install");
@@ -102,6 +68,9 @@ export function KeyringConnectModule({
       if (credentialData && validCredentialData(credentialData)) {
         setFlowState("calldata-ready");
         setCalldata(credentialData);
+      } else if (flowState !== "progress") {
+        setCalldata(null);
+        setFlowState("start");
       }
     });
 
@@ -146,23 +115,6 @@ export function KeyringConnectModule({
     }
   };
 
-  // Keep a simple check status function for manual checks
-  const checkStatus = useCallback(async () => {
-    if (isCheckingStatus) return;
-    setIsCheckingStatus(true);
-
-    try {
-      await KeyringConnect.getExtensionState();
-      // Subscription will handle the state updates
-    } catch (error) {
-      console.error("Failed to check status:", error);
-    } finally {
-      setTimeout(() => {
-        setIsCheckingStatus(false);
-      }, 1500);
-    }
-  }, [isCheckingStatus]);
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -175,13 +127,7 @@ export function KeyringConnectModule({
     }
   }, [address, chainId]);
 
-  if (
-    !isMounted ||
-    !flowState ||
-    flowState === "valid" ||
-    flowState === "error"
-  )
-    return null;
+  if (!isMounted || !flowState) return null;
 
   const renderKeyringConnectModule = () => {
     switch (flowState) {
@@ -228,14 +174,7 @@ export function KeyringConnectModule({
                 ? "Transaction will be prepared in the Keyring extension."
                 : "After the verification you can continue here."}
             </p>
-            <div className="flex gap-2 justify-between mt-3">
-              <Button
-                onClick={checkStatus}
-                disabled={isCheckingStatus}
-                variant="outline"
-              >
-                {isCheckingStatus ? "Checking..." : "Check Status"}
-              </Button>
+            <div className="flex gap-2 justify-end mt-3">
               <Button
                 variant="ghost"
                 onClick={() => {
