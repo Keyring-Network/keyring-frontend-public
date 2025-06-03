@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WagmiProvider } from "@/components/providers/WagmiProvider";
-import { WalletModal } from "@/components/wallet/WalletModal";
+import ReownProvider from "@/components/providers/ReownProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { headers } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,23 +21,25 @@ export const metadata: Metadata = {
   description: "Demo application showing Keyring Connect integration",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headersData = await headers();
+  const cookies = headersData.get('cookie');
+  
   return (
     <html lang="en" className="h-full">
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans h-full`}
       >
-        <WagmiProvider>
+        <ReownProvider cookies={cookies}>
           <TooltipProvider>
             <main className="h-full">{children}</main>
             <Toaster theme="light" />
-            <WalletModal />
           </TooltipProvider>
-        </WagmiProvider>
+        </ReownProvider>
       </body>
     </html>
   );

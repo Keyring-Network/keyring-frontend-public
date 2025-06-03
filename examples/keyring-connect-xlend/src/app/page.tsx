@@ -8,8 +8,10 @@ import { CtaMock } from "@/components/demo/XLendAppInterface/CtaMock";
 import { useEffect, useState } from "react";
 import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
-import { useAccount } from "wagmi";
 import { KeyringConnectModule } from "@/components/demo/KeyringConnectModule";
+import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
+import { KeyringConnectLinks } from "@/components/demo/KeyringConnectModule/KeyringConnectLinks";
+import { usePolicyStore } from "@/hooks/store/usePolicyStore";
 
 export type FlowState =
   | "loading"
@@ -25,12 +27,11 @@ export type FlowState =
 export default function KeyringConnectDemo() {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
-  const { address, chainId } = useAccount();
+  const { address } = useAppKitAccount();
+  const { caipNetworkId } = useAppKitNetwork();
+  const { policyId } = usePolicyStore();
 
-  // NOTE: Must be set to the same policyId used on-chain, for now hardcoded to test policy
-  const POLICY_ID = 7;
-
-  const { status: credentialStatus, error } = useCheckCredential(POLICY_ID);
+  const { status: credentialStatus, error } = useCheckCredential(policyId);
 
   // Update flow state based on credential status
   useEffect(() => {
@@ -50,6 +51,7 @@ export default function KeyringConnectDemo() {
         setFlowState("valid");
         break;
       case "no-credential":
+      case "expired":
         setFlowState("no-credential");
         break;
     }
@@ -59,6 +61,19 @@ export default function KeyringConnectDemo() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Only mount KeyringConnectModule when user interaction is needed for verification
+  const shouldShowKeyringModule =
+    !!address &&
+    !!flowState &&
+    [
+      "no-credential",
+      "install",
+      "start",
+      "progress",
+      "calldata-ready",
+      "transaction-pending",
+    ].includes(flowState);
 
   // Only render client-side content after mounting
   if (!isMounted) {
@@ -74,20 +89,26 @@ export default function KeyringConnectDemo() {
       <AppHeader />
       <div className="flex justify-center items-center py-8 px-4">
         <div className="w-full max-w-xl">
-          <VerificationBadge flowState={flowState} />
+          <VerificationBadge
+            flowState={flowState}
+            credentialExpired={credentialStatus === "expired"}
+          />
 
           <Card className="bg-white rounded-xl shadow-lg overflow-hidden">
             <CardContent className="p-4 pb-0">
               <LendingTabsMock />
               <LendingFormMock activeTab="install" />
 
-              <KeyringConnectModule
-                policyId={POLICY_ID}
-                flowState={flowState}
-                setFlowState={setFlowState}
-                address={address}
-                chainId={chainId}
-              />
+              {shouldShowKeyringModule && (
+                <KeyringConnectModule
+                  policyId={policyId}
+                  flowState={flowState}
+                  setFlowState={setFlowState}
+                  address={address}
+                  caipNetworkId={caipNetworkId}
+                  credentialExpired={credentialStatus === "expired"}
+                />
+              )}
 
               <CtaMock flowState={flowState} />
 
@@ -102,6 +123,7 @@ export default function KeyringConnectDemo() {
           </Card>
         </div>
       </div>
+      <KeyringConnectLinks />
     </div>
   );
 }

@@ -1,42 +1,38 @@
-import { KEYRING_CONTRACT_ABI, getKeyringContractAddress } from "@/constant";
-import { useMemo } from "react";
-import { useAccount, useChains } from "wagmi";
-import { useReadContract } from "wagmi";
+import { useAppKitNetwork } from "@reown/appkit/react";
+import { useCheckCredentialEvm } from "./useCheckCredentialEvm";
+import { useCheckCredentialSolana } from "./useCheckCredentialSolana";
 
 type CheckCredentialResult = {
   hasValidCredential: boolean;
-  status: "valid" | "no-credential" | "loading" | "error";
+  status: "valid" | "no-credential" | "loading" | "error" | "expired";
   error: Error | null;
   refetch: () => void;
 };
 
 export const useCheckCredential = (policyId: number): CheckCredentialResult => {
-  const { address, chainId } = useAccount();
-  const chains = useChains();
-  const { data, isPending, isError, error, refetch } = useReadContract({
-    address: getKeyringContractAddress(chainId) as `0x${string}`,
-    abi: KEYRING_CONTRACT_ABI,
-    functionName: "checkCredential",
-    args: [address!, policyId],
-    query: {
-      enabled: !!address && chains.some((chain) => chain.id === chainId),
-    },
-  });
+  const { caipNetworkId } = useAppKitNetwork();
 
-  const hasChecked = !isPending && !isError;
-  const hasValidCredential = data === true;
+  const {
+    hasValidCredential: hasValidCredentialEvm,
+    status: statusEvm,
+    error: errorEvm,
+    refetch: refetchEvm,
+  } = useCheckCredentialEvm(policyId);
+  const {
+    hasValidCredential: hasValidCredentialSolana,
+    status: statusSolana,
+    error: errorSolana,
+    refetch: refetchSolana,
+  } = useCheckCredentialSolana(policyId);
 
-  const status = useMemo(() => {
-    if (hasValidCredential) return "valid";
-    if (hasChecked) return "no-credential";
-    if (isPending) return "loading";
-    return "error";
-  }, [hasValidCredential, hasChecked, isPending]);
+  const isSolanaConnected = caipNetworkId?.startsWith("solana");
 
   return {
-    hasValidCredential,
-    status,
-    error,
-    refetch,
+    hasValidCredential: isSolanaConnected
+      ? hasValidCredentialSolana
+      : hasValidCredentialEvm,
+    status: isSolanaConnected ? statusSolana : statusEvm,
+    error: isSolanaConnected ? errorSolana : errorEvm,
+    refetch: isSolanaConnected ? refetchSolana : refetchEvm,
   };
 };
