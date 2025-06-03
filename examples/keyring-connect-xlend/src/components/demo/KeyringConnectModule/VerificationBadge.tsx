@@ -22,7 +22,7 @@ export const VerificationBadge = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger className="cursor-help">
         <div className="w-full flex justify-start mb-6">
           <Badge
             variant="outline"
