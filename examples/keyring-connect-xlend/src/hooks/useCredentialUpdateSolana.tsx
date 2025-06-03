@@ -267,7 +267,7 @@ export const useCredentialUpdateSolana = ({
     credentialData,
   ]);
 
-  const triggerRetry = useCallback(() => {
+  const refetchSimulation = useCallback(() => {
     setRetryCounter((prev) => prev + 1);
     setSimulationError(null);
     setIsSimulating(true);
@@ -278,7 +278,7 @@ export const useCredentialUpdateSolana = ({
     isWalletUpdating: isBusy,
     isWalletUpdateSuccessful,
     simulationError,
-    triggerRetry,
+    refetchSimulation,
     isSimulating,
   };
 };

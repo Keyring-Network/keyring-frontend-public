@@ -18,7 +18,7 @@ export const useCredentialUpdate = ({
     writeWithWallet: writeWithEvmWallet,
     isWalletUpdating: isEvmWalletUpdating,
     simulationError: evmSimulationError,
-    //triggerRetry: triggerEvmRetry,
+    refetchSimulation: refetchEvmSimulation,
     isSimulating: isEvmSimulating,
   } = useCredentialUpdateEvm({
     calldata,
@@ -29,7 +29,7 @@ export const useCredentialUpdate = ({
     writeWithWallet: writeWithSolanaWallet,
     isWalletUpdating: isSolanaWalletUpdating,
     simulationError: solanaSimulationError,
-    //triggerRetry: triggerSolanaRetry,
+    refetchSimulation: refetchSolanaSimulation,
     isSimulating: isSolanaSimulating,
   } = useCredentialUpdateSolana({
     credentialData: calldata,
@@ -37,15 +37,6 @@ export const useCredentialUpdate = ({
   });
 
   const isSolanaConnected = caipNetworkId?.startsWith("solana");
-
-  // FIXME: Improve the refetch, such that only the relevant query is refetched
-  // const triggerRetry = useCallback(() => {
-  //   if (isSolanaConnected) {
-  //     triggerSolanaRetry();
-  //   } else {
-  //     triggerEvmRetry();
-  //   }
-  // }, [isSolanaConnected, triggerSolanaRetry, triggerEvmRetry]);
 
   return {
     writeWithWallet: isSolanaConnected
@@ -57,7 +48,9 @@ export const useCredentialUpdate = ({
     simulationError: isSolanaConnected
       ? solanaSimulationError
       : evmSimulationError,
-    //triggerRetry,
+    refetchSimulation: isSolanaConnected
+      ? refetchSolanaSimulation
+      : refetchEvmSimulation,
     isSimulating: isSolanaConnected ? isSolanaSimulating : isEvmSimulating,
   };
 };

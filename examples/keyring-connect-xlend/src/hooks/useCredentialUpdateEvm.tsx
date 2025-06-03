@@ -26,6 +26,7 @@ interface CredentialUpdateResponse {
   isWalletUpdating: boolean;
   isSimulating: boolean;
   simulationError: string | null;
+  refetchSimulation: () => void;
 }
 
 export const useCredentialUpdateEvm = ({
@@ -55,6 +56,7 @@ export const useCredentialUpdateEvm = ({
     data,
     error: simulateContractError,
     status: simulateContractStatus,
+    refetch: refetchSimulation,
   } = useSimulateContract({
     functionName: "createCredential",
     abi: contract.ABI,
@@ -118,6 +120,11 @@ export const useCredentialUpdateEvm = ({
   }, [calldata]);
 
   useEffect(() => {
+    if (simulateContractStatus === "pending") {
+      setIsSimulating(true);
+      setSimulationError(null);
+    }
+
     if (
       simulateContractStatus === "success" ||
       simulateContractStatus === "error"
@@ -183,6 +190,7 @@ export const useCredentialUpdateEvm = ({
     writeWithWallet: isWriteEnabled ? handleWrite : undefined,
     isWalletUpdating: isPending,
     isSimulating,
+    refetchSimulation,
     simulationError,
   };
 };
