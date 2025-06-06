@@ -4,7 +4,6 @@ import {
   getKrnContractAddress,
   IDL_SOLANA,
   KeyringNetworkSolana,
-  REGISTERED_SOLANA_KEYS,
   SupportedChainIds,
 } from "@keyringnetwork/contracts-abi";
 import { CredentialData } from "@keyringnetwork/keyring-connect-sdk";
@@ -39,11 +38,13 @@ export const getSolanaProgram = ({
  *
  * @param credentialData - The credential data object containing credential details
  * @param tradingAddress - The trading address as a Solana PublicKey
- * @returns An array of values representing the credential data payload
+ * @param connection - The Solana connection to fetch on-chain data
+ * @returns Promise resolving to an array of values representing the credential data payload
  */
-export const credentialUpdatePayload = (
+export const credentialUpdatePayload = async (
   credentialData: CredentialData,
-  tradingAddress: PublicKey
+  tradingAddress: PublicKey,
+  connection: Connection
 ) => {
   const { policyId, chainId, validUntil, cost, backdoor, key, signature } =
     credentialData;
@@ -65,9 +66,12 @@ export const credentialUpdatePayload = (
     throw new Error("Missing required fields");
   }
 
-  const _key = REGISTERED_SOLANA_KEYS[key];
+  const program = getSolanaProgram({ connection });
+  const _key = await findKeyByEthAddress(key, program);
   if (!_key) {
-    throw new Error("Unknown signer key");
+    throw new Error(
+      `Unknown signer key: ${key}. Key not found in on-chain registry.`
+    );
   }
 
   return [
@@ -84,16 +88,36 @@ export const credentialUpdatePayload = (
 /**
  * Get PDA for key mapping (e.g.7R94CmuM4A7tHCqpP7ZRzYHGsbK7sptRrQwXLJwW9Dmm)
  *
- * @param key - The key of the registered key (resigner)
+ * @param key - The key as Uint8Array or Ethereum address string
  * @param program - The program instance
- * @returns The PDA for the key
+ * @param connection - Optional connection to fetch the key if ethAddress is provided
+ * @returns Promise resolving to the PDA for the key
  */
-export const getKeyMapping = (
-  key: string,
-  program: Program<KeyringNetworkSolana>
-) => {
-  const _key = REGISTERED_SOLANA_KEYS[key];
-  const keyHash = Buffer.from(keccak_256(new Uint8Array(_key)));
+export const getKeyMapping = async (
+  key: Uint8Array | string,
+  program: Program<KeyringNetworkSolana>,
+  connection: Connection
+): Promise<PublicKey> => {
+  let _key: Uint8Array;
+
+  if (typeof key === "string") {
+    // If key is a string (Ethereum address), fetch it from on-chain registry
+    if (!connection) {
+      throw new Error(
+        "Connection required when key is provided as Ethereum address string"
+      );
+    }
+    const foundKey = await findKeyByEthAddress(key, program);
+    if (!foundKey) {
+      throw new Error(`Key not found in on-chain registry: ${key}`);
+    }
+    _key = foundKey;
+  } else {
+    // If key is a Uint8Array, use it directly
+    _key = key;
+  }
+
+  const keyHash = Buffer.from(keccak_256(_key));
   const [keyMapping] = PublicKey.findProgramAddressSync(
     [
       Buffer.from("keyring_program"),
@@ -105,7 +129,6 @@ export const getKeyMapping = (
 
   return keyMapping;
 };
-
 /**
  * Get PDA for entity mapping
  *
@@ -164,4 +187,111 @@ export const getEntityExp = (
     console.error("getEntityExp", e);
     return null;
   }
+};
+
+/**
+ * Get PDA for key registry
+ *
+ * @param program - The program instance
+ * @returns The PDA for the key registry
+ */
+export const getKeyRegistry = (program: Program<KeyringNetworkSolana>) => {
+  const [keyRegistry] = PublicKey.findProgramAddressSync(
+    [Buffer.from("keyring_program"), Buffer.from("active_keys")],
+    program.programId
+  );
+
+  return keyRegistry;
+};
+
+/**
+ * Fetch all active keys from the on-chain key registry
+ *
+ * @param program - The program instance
+ * @returns Promise resolving to array of active keys as Uint8Arrays
+ */
+export const fetchActiveKeys = async (
+  program: Program<KeyringNetworkSolana>
+): Promise<Uint8Array[]> => {
+  try {
+    const keyRegistryPda = getKeyRegistry(program);
+    const keyRegistryAccount = await (
+      program.account as typeof program.account & {
+        keyRegistry: {
+          fetch: (pda: PublicKey) => Promise<{ activeKeys: Buffer[] }>;
+        };
+      }
+    ).keyRegistry.fetch(keyRegistryPda);
+    return keyRegistryAccount.activeKeys.map(
+      (key: Buffer) => new Uint8Array(key)
+    );
+  } catch (e) {
+    console.error(e, "fetchActiveKeys");
+    return [];
+  }
+};
+
+/**
+ * Find a key in the active keys registry by its Ethereum address
+ *
+ * @param ethAddress - The Ethereum address to search for (e.g., '0x0be8dd812a02774335000eed8935a8164a24719f')
+ * @param program - The program instance
+ * @returns Promise resolving to the key as Uint8Array or null if not found
+ */
+export const findKeyByEthAddress = async (
+  ethAddress: string,
+  program: Program<KeyringNetworkSolana>
+): Promise<Uint8Array | null> => {
+  try {
+    const activeKeys = await fetchActiveKeys(program);
+
+    // Find the key that matches the Ethereum address
+    for (const key of activeKeys) {
+      const derivedEthAddress = pubKeyToEthAddress(key);
+      if (derivedEthAddress.toLowerCase() === ethAddress.toLowerCase()) {
+        return key;
+      }
+    }
+
+    return null;
+  } catch (e) {
+    console.error(e, "findKeyByEthAddress");
+    return null;
+  }
+};
+
+/**
+ * Converts a SECP256K1 public key to an Ethereum address
+ *
+ * @param pubKey SECP256K1 public key as Uint8Array
+ * @returns Ethereum address as hex string
+ *
+ * @example
+ * ```ts
+ * const key = new Uint8Array([
+ *   136, 203, 19, 215, 193, 242, 63, 59, 221, 17, 241, 125, 130, 83, 47, 209, 169,
+ *   231, 117, 80, 166, 253, 164, 160, 218, 180, 156, 223, 89, 234, 23, 42, 142,
+ *   73, 63, 162, 177, 209, 49, 89, 122, 148, 77, 9, 51, 204, 29, 207, 0, 122, 92,
+ *   229, 156, 251, 211, 89, 216, 175, 138, 131, 221, 211, 55, 146,
+ * ])
+ * const ethAddress = pubKeyToEthAddress(key) // -> 0x0be8dd812a02774335000eed8935a8164a24719f
+ * ```
+ */
+export const pubKeyToEthAddress = (pubKey: Uint8Array) => {
+  // If the key is already 20 bytes (Ethereum address length), return it as is
+  if (pubKey.length === 20) {
+    return "0x" + Buffer.from(pubKey).toString("hex");
+  }
+
+  // Otherwise, process it as a public key
+  // Remove the first byte if it's a 65-byte pubkey (with prefix)
+  const key = pubKey.length === 65 ? pubKey.slice(1) : pubKey;
+
+  // Hash the public key with keccak-256
+  const hash = keccak_256(key);
+
+  // Take the last 20 bytes
+  const address = Buffer.from(hash).slice(12);
+
+  return "0x" + address.toString("hex");
 };

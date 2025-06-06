@@ -150,10 +150,18 @@ export const useCredentialUpdateSolana = ({
           trader,
           program
         );
-        const keyMapping = getKeyMapping(credentialData.key, program);
+        const keyMapping = await getKeyMapping(
+          credentialData.key,
+          program,
+          connection
+        );
 
         // Create payload for credential update
-        const payload = credentialUpdatePayload(credentialData, trader);
+        const payload = await credentialUpdatePayload(
+          credentialData,
+          trader,
+          connection
+        );
 
         const transaction = await program.methods
           .createCredential(...payload)
