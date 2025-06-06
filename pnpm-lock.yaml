@@ -14,8 +14,8 @@ importers:
         specifier: 0.29.0
         version: 0.29.0(typescript@5.8.3)
       '@keyringnetwork/contracts-abi':
-        specifier: ^2.3.0
-        version: 2.3.0
+        specifier: ^2.4.0
+        version: 2.4.0
       '@keyringnetwork/keyring-connect-sdk':
         specifier: ^2.2.0
         version: 2.2.0
@@ -1016,8 +1016,8 @@ packages:
     resolution: {integrity: sha512-4Q0AmkajyMr+aC1TbuU1L2D/kw6vO838k/ssONp8exhAZL+FY3DbXjrzFbFeDz2yznXwUUO3Myl8KDkqjUpUBA==}
     dev: false
 
-  /@keyringnetwork/contracts-abi@2.3.0:
-    resolution: {integrity: sha512-OwWvUIELovz61r1C/Fx6zBemhKPAPb/952fDk+q9qaBbtv8w0kElVOfgd+NlUN1iksywD0LSVkAHzLc5rIygGQ==}
+  /@keyringnetwork/contracts-abi@2.4.0:
+    resolution: {integrity: sha512-kGkpGf88EdV5kUI5ll8ETaHhQHNyHt5CsZ06CXU6p2+1bXJcG6bLIm8FsYL1s33HwN5TBXIl2up5csP2ZCt5GQ==}
     dev: false
 
   /@keyringnetwork/keyring-connect-sdk@2.2.0:
