@@ -17,8 +17,8 @@ importers:
         specifier: ^2.4.0
         version: 2.4.0
       '@keyringnetwork/keyring-connect-sdk':
-        specifier: ^2.2.0
-        version: 2.2.0
+        specifier: 2.3.0
+        version: 2.3.0
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.8.0
@@ -1012,18 +1012,14 @@ packages:
       merkletreejs: 0.3.11
     dev: false
 
-  /@keyringnetwork/contracts-abi@2.2.0:
-    resolution: {integrity: sha512-4Q0AmkajyMr+aC1TbuU1L2D/kw6vO838k/ssONp8exhAZL+FY3DbXjrzFbFeDz2yznXwUUO3Myl8KDkqjUpUBA==}
-    dev: false
-
   /@keyringnetwork/contracts-abi@2.4.0:
     resolution: {integrity: sha512-kGkpGf88EdV5kUI5ll8ETaHhQHNyHt5CsZ06CXU6p2+1bXJcG6bLIm8FsYL1s33HwN5TBXIl2up5csP2ZCt5GQ==}
     dev: false
 
-  /@keyringnetwork/keyring-connect-sdk@2.2.0:
-    resolution: {integrity: sha512-+UlcaptBecbF4R9sTBAgMT0AEudmx3qHUzciH0uaDeK1akupx+50FIWL3IkMB/dcrnonHvjT0I1rmDNnGn2vxw==}
+  /@keyringnetwork/keyring-connect-sdk@2.3.0:
+    resolution: {integrity: sha512-jM0CVcFIz9F5rGCQahjBoQJVk7KHgyOqN1baD4yNFkCyXWlGbsLuCCVS4ITaJ3pSwjJXaKQpRhw++oTVUahEeQ==}
     dependencies:
-      '@keyringnetwork/contracts-abi': 2.2.0
+      '@keyringnetwork/contracts-abi': 2.4.0
     dev: false
 
   /@lit-labs/ssr-dom-shim@1.3.0:
