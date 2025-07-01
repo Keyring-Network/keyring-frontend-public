@@ -13,8 +13,8 @@ import {
 } from "@keyringnetwork/contracts-abi";
 import { Loader } from "lucide-react";
 import { createBlockExplorerAction } from "@/utils/blockExplorer";
-import { DEPLOYMENT_ENVIRONMENT } from "@/config";
 import { useAppKitNetwork } from "@reown/appkit/react";
+import { useEnvironmentStore } from "./store/useEnvironmentStore";
 
 interface CredentialUpdateProps {
   calldata: CredentialData;
@@ -42,14 +42,14 @@ export const useCredentialUpdateEvm = ({
     null
   );
   const { refetch: refetchCredential } = useCheckCredential(calldata.policyId);
+  const { environment } = useEnvironmentStore();
   const { chainId } = useAppKitNetwork();
-
   const _chainId = (chainId || 1) as KrnSupportedChainId;
 
   const contract = enabled
     ? getKrnDeploymentArtifact({
         chainId: _chainId,
-        env: DEPLOYMENT_ENVIRONMENT, // NOTE: only for development purposes, env should be removed in production
+        env: environment, // NOTE: only for development purposes, env defaults to production
       })
     : {
         address: "",

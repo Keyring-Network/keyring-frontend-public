@@ -16,18 +16,16 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
-
-const POLICIES = [
-  {
-    name: "Keyring Connect Test",
-    id: 7,
-  },
-];
+import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
+import { usePolicies } from "@/hooks/usePolicies";
 
 export const KeyringConnectLinks = () => {
   const [isVisible, setIsVisible] = useState(true);
-  const { policyId, setPolicyId } = usePolicyStore();
-  const selectedPolicy = POLICIES.find((p) => p.id === policyId);
+  const { policy, setPolicy } = usePolicyStore();
+  const { environment, setEnvironment } = useEnvironmentStore();
+  const { policies } = usePolicies();
+
+  const selectedPolicy = policies.find((p) => p.id === policy.id);
 
   if (!isVisible) return null;
 
@@ -86,6 +84,31 @@ export const KeyringConnectLinks = () => {
           </Button>
 
           <div className="mt-2">
+            <p className="text-xs text-white/70 mb-1 mt-4">Environment</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="w-full items-center p-2 justify-between flex gap-2 h-8 text-xs text-white hover:text-firefly hover:bg-firefly-100 rounded-md">
+                {environment.toUpperCase()}
+                <ChevronRight className="w-3 h-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Select Environment</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setEnvironment("dev")}>
+                  DEV
+                  {environment === "dev" ? (
+                    <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
+                  ) : null}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setEnvironment("prod")}>
+                  PROD
+                  {environment === "prod" ? (
+                    <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
+                  ) : null}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="mt-2">
             <p className="text-xs text-white/70 mb-1 mt-4">
               Active Test Policy
             </p>
@@ -96,13 +119,13 @@ export const KeyringConnectLinks = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuLabel>Select Policy</DropdownMenuLabel>
-                {POLICIES.map((policy) => (
+                {policies.map((policy) => (
                   <DropdownMenuItem
                     key={policy.id}
-                    onClick={() => setPolicyId(policy.id)}
+                    onClick={() => setPolicy(policy)}
                   >
                     {policy.name}
-                    {policy.id === policyId ? (
+                    {selectedPolicy?.id === policy.id ? (
                       <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
                     ) : null}
                   </DropdownMenuItem>

@@ -1,4 +1,4 @@
-import { DEPLOYMENT_ENVIRONMENT, networks } from "@/config";
+import { networks } from "@/config";
 import {
   getKrnDeploymentArtifact,
   KrnSupportedChainId,
@@ -6,6 +6,7 @@ import {
 import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import { useMemo } from "react";
 import { useReadContract } from "wagmi";
+import { useEnvironmentStore } from "./store/useEnvironmentStore";
 
 type CheckCredentialResult = {
   hasValidCredential: boolean;
@@ -19,10 +20,11 @@ export const useCheckCredentialEvm = (
 ): CheckCredentialResult => {
   const { address } = useAppKitAccount();
   const { caipNetworkId, chainId } = useAppKitNetwork();
+  const { environment } = useEnvironmentStore();
 
   const contract = getKrnDeploymentArtifact({
     chainId: (chainId || 1) as KrnSupportedChainId,
-    env: DEPLOYMENT_ENVIRONMENT,
+    env: environment,
   });
 
   const isEnabled = useMemo(() => {

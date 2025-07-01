@@ -1,4 +1,3 @@
-import { DEPLOYMENT_ENVIRONMENT } from "@/config";
 import { BN, Program } from "@coral-xyz/anchor";
 import {
   getKrnContractAddress,
@@ -12,6 +11,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 
 interface GetProgramParams {
   connection: Connection;
+  env: "dev" | "prod";
 }
 
 /**
@@ -22,10 +22,11 @@ interface GetProgramParams {
  */
 export const getSolanaProgram = ({
   connection,
+  env,
 }: GetProgramParams): Program<KeyringNetworkSolana> => {
   const address = getKrnContractAddress({
     chainId: SupportedChainIds.SOLANA,
-    env: DEPLOYMENT_ENVIRONMENT, // NOTE: only for development purposes, env should be removed in production
+    env, // NOTE: only for development purposes, env defaults to production
   });
   const programId = new PublicKey(address);
   return new Program<KeyringNetworkSolana>(IDL_SOLANA, programId, {
@@ -44,7 +45,8 @@ export const getSolanaProgram = ({
 export const credentialUpdatePayload = async (
   credentialData: CredentialData,
   tradingAddress: PublicKey,
-  connection: Connection
+  connection: Connection,
+  env: "dev" | "prod"
 ) => {
   const { policyId, chainId, validUntil, cost, backdoor, key, signature } =
     credentialData;
@@ -66,7 +68,7 @@ export const credentialUpdatePayload = async (
     throw new Error("Missing required fields");
   }
 
-  const program = getSolanaProgram({ connection });
+  const program = getSolanaProgram({ connection, env });
   const _key = await findKeyByEthAddress(key, program);
   if (!_key) {
     throw new Error(
@@ -176,10 +178,11 @@ export const getProgramState = (program: Program<KeyringNetworkSolana>) => {
 export const getEntityExp = (
   policyId: number,
   trader: PublicKey,
-  connection: Connection
+  connection: Connection,
+  env: "dev" | "prod"
 ) => {
   try {
-    const program = getSolanaProgram({ connection });
+    const program = getSolanaProgram({ connection, env });
     const entityMapping = getEntityMapping(policyId, trader, program);
     const entityExp = program.account.entityData.fetch(entityMapping);
     return entityExp;

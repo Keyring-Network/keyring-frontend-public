@@ -13,6 +13,7 @@ import {
   holesky,
 } from "@reown/appkit/networks";
 import type { AppKitNetwork } from "@reown/appkit/networks";
+import { Policy } from "@/types/keyring";
 
 // Get projectId from https://cloud.reown.com
 export const REOWN_PROJECT_ID =
@@ -45,5 +46,9 @@ export const solanaWeb3JsAdapter = new SolanaAdapter();
 
 export const config = wagmiAdapter.wagmiConfig;
 
-export const DEPLOYMENT_ENVIRONMENT =
-  process.env.NEXT_PUBLIC_DEPLOYMENT_ENVIRONMENT === "prod" ? "prod" : "dev";
+export const DEFAULT_POLICIES: Policy[] = [
+  {
+    name: "Keyring Connect Test",
+    id: 7,
+  },
+];

@@ -11,10 +11,15 @@ import { Icon } from "./Icon";
 import { FlowState } from "@/app/page";
 import { KeyringLogo } from "@/components/ui/keyring-logo";
 import { CredentialUpdate } from "./CredentialUpdate";
-import { KrnSupportedChainId } from "@keyringnetwork/contracts-abi";
+import {
+  KrnSupportedChainId,
+  SupportedChainIds,
+} from "@keyringnetwork/contracts-abi";
 import { CaipNetworkId } from "@reown/appkit";
 import { getChainIdFromCaipNetworkId } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
+import { usePolicyStore } from "@/hooks/store/usePolicyStore";
 interface KeyringConnectModuleProps {
   policyId: number;
   address?: string;
@@ -40,19 +45,30 @@ export function KeyringConnectModule({
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
 
+  const { environment } = useEnvironmentStore();
+  const { policy } = usePolicyStore();
+
   const chainId = useMemo(() => {
     return getChainIdFromCaipNetworkId(caipNetworkId);
   }, [caipNetworkId]);
 
   const validCredentialData = useCallback(
     (credentialData: CredentialData): boolean => {
-      return (
+      const baseValidation =
         credentialData.trader === address &&
         credentialData.policyId === policyId &&
-        credentialData.chainId === chainId
-      );
+        credentialData.chainId === chainId;
+
+      // For Solana, we don't check the public key as it's not consistent across the flow
+      if (credentialData.chainId === SupportedChainIds.SOLANA) {
+        return baseValidation;
+      }
+
+      // For non-Solana chains, we also validate the public key matches
+      // This is needed because we switch between dev and prod environments
+      return baseValidation && credentialData.key === policy.public_key?.n;
     },
-    [address, policyId, chainId]
+    [address, policyId, chainId, policy]
   );
 
   // Subscribe to the extension state changes
@@ -77,7 +93,7 @@ export function KeyringConnectModule({
     return unsubscribe; // Cleanup on unmount
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validCredentialData, flowState]);
+  }, [validCredentialData, flowState, environment]);
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
@@ -85,8 +101,22 @@ export function KeyringConnectModule({
   // The user gets redirected back to the app after the extension is installed.
   // Hence it is NOT recommended to manually link to the extension's install page.
   // If the extension is installed, the extension will be launched and the user can start the Keyring Connect verification process.
-  const launchExtension = async () => {
+  const launchExtension = async (isInstalled?: boolean) => {
     if (!address || !chainId) return;
+
+    // NOTE: This check is only needed as any arbitrary policy can be selected
+    // and we need to ensure that the policy is configured to be used on the current chain
+    if (isInstalled) {
+      const supportedChainIds = policy?.costs?.map((cost) => cost.chain_id);
+      if (!supportedChainIds?.includes(chainId)) {
+        window.alert(
+          `This policy is not supported for this chain. Please select a different policy. Supported chains: ${supportedChainIds?.join(
+            ", "
+          )}. Current chain: ${chainId}`
+        );
+        return;
+      }
+    }
 
     try {
       const exampleConfig: ExtensionSDKConfig = {
@@ -99,10 +129,13 @@ export function KeyringConnectModule({
           wallet_address: address,
         },
         // NOTE: This `krn_config` is only required for development purposes and needs to be removed in production.
-        krn_config: {
-          keyring_api_url: "https://main.api.keyring-backend.krndev.net",
-          keyring_user_app_url: "https://app.keyringdev.network",
-        },
+        krn_config:
+          environment === "dev"
+            ? {
+                keyring_api_url: "https://main.api.keyring-backend.krndev.net",
+                keyring_user_app_url: "https://app.keyringdev.network",
+              }
+            : undefined,
       };
 
       // Update state to show progress
@@ -137,7 +170,7 @@ export function KeyringConnectModule({
             <p className="text-sm text-gray-600 mt-1">
               Install the Keyring extension to complete identity verification.
             </p>
-            <Button className="mt-3" onClick={launchExtension}>
+            <Button className="mt-3" onClick={() => launchExtension()}>
               Install Extension
             </Button>
           </>
@@ -155,7 +188,7 @@ export function KeyringConnectModule({
                 ? "Renew your credential to access lending features."
                 : "Verify your identity to access lending features."}
             </p>
-            <Button className="mt-3" onClick={launchExtension}>
+            <Button className="mt-3" onClick={() => launchExtension(true)}>
               {credentialExpired ? "Refresh Credential" : "Start Verification"}
             </Button>
           </>
