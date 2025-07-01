@@ -20,17 +20,30 @@ import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { usePolicies } from "@/hooks/usePolicies";
 
 export const KeyringConnectLinks = () => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const { policy, setPolicy } = usePolicyStore();
   const { environment, setEnvironment } = useEnvironmentStore();
   const { policies } = usePolicies();
 
   const selectedPolicy = policies.find((p) => p.id === policy.id);
 
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return (
+      <div className="fixed bottom-4 left-4 z-50 xl:block">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="w-10 h-10 p-0 bg-teal text-firefly rounded-full border border-blue-100 shadow-lg hover:bg-teal/60 hover:border-teal"
+          onClick={() => setIsVisible(true)}
+        >
+          <Code2 className="w-4 h-4" />
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 hidden xl:block ">
+    <div className="fixed bottom-4 left-4 z-50 xl:block">
       <div className="relative bg-firefly text-white rounded-xl p-3 border border-blue-100 shadow-lg min-w-[250px] max-w-[280px]">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-6 h-6 bg-teal text-firefly rounded-md flex items-center justify-center">
