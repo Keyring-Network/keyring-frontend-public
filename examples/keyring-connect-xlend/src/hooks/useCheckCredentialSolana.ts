@@ -5,6 +5,7 @@ import { useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PublicKey } from "@solana/web3.js";
 import { getEntityExp } from "@/lib/solana";
+import { useEnvironmentStore } from "./store/useEnvironmentStore";
 
 type CheckCredentialResult = {
   hasValidCredential: boolean;
@@ -20,6 +21,7 @@ export const useCheckCredentialSolana = (
   const { caipNetworkId, chainId } = useAppKitNetwork();
   const { connection } = useAppKitConnection();
   const queryClient = useQueryClient();
+  const { environment } = useEnvironmentStore();
 
   // Create a query key that includes all dependencies
   const queryKey = useMemo(
@@ -47,7 +49,12 @@ export const useCheckCredentialSolana = (
       const publicKey = new PublicKey(address);
 
       // Fetch entity expiration data
-      const entityData = await getEntityExp(policyId, publicKey, connection);
+      const entityData = await getEntityExp(
+        policyId,
+        publicKey,
+        connection,
+        environment
+      );
 
       // Extract expiry timestamp or use 0 if not found
       const expiryTimestamp = entityData

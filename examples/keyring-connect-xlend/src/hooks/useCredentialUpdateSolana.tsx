@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Loader } from "lucide-react";
 import { createBlockExplorerAction } from "@/utils/blockExplorer";
 import { useWaitForTransactionSolana } from "./useWaitForTransactionSolana";
+import { useEnvironmentStore } from "./store/useEnvironmentStore";
 
 interface CredentialUpdateProps {
   credentialData: CredentialData;
@@ -42,6 +43,7 @@ export const useCredentialUpdateSolana = ({
   const { refetch: refetchCredential } = useCheckCredential(
     credentialData.policyId
   );
+  const { environment } = useEnvironmentStore();
   const [retryCounter, setRetryCounter] = useState(0);
   const [isSimulating, setIsSimulating] = useState(false);
   const [transactionSignature, setTransactionSignature] = useState<
@@ -141,6 +143,7 @@ export const useCredentialUpdateSolana = ({
 
         const program = getSolanaProgram({
           connection,
+          env: environment,
         });
 
         // Get PDAs
@@ -160,7 +163,8 @@ export const useCredentialUpdateSolana = ({
         const payload = await credentialUpdatePayload(
           credentialData,
           trader,
-          connection
+          connection,
+          environment
         );
 
         const transaction = await program.methods

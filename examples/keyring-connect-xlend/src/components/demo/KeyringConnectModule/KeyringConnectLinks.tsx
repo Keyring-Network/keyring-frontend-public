@@ -16,23 +16,34 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
-
-const POLICIES = [
-  {
-    name: "Keyring Connect Test",
-    id: 7,
-  },
-];
+import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
+import { usePolicies } from "@/hooks/usePolicies";
 
 export const KeyringConnectLinks = () => {
-  const [isVisible, setIsVisible] = useState(true);
-  const { policyId, setPolicyId } = usePolicyStore();
-  const selectedPolicy = POLICIES.find((p) => p.id === policyId);
+  const [isVisible, setIsVisible] = useState(false);
+  const { policy, setPolicy } = usePolicyStore();
+  const { environment, setEnvironment } = useEnvironmentStore();
+  const { policies } = usePolicies();
 
-  if (!isVisible) return null;
+  const selectedPolicy = policies.find((p) => p.id === policy.id);
+
+  if (!isVisible) {
+    return (
+      <div className="fixed bottom-4 left-4 z-50 xl:block">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="w-10 h-10 p-0 bg-teal text-firefly rounded-full border border-blue-100 shadow-lg hover:bg-teal/60 hover:border-teal"
+          onClick={() => setIsVisible(true)}
+        >
+          <Code2 className="w-4 h-4" />
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 hidden xl:block ">
+    <div className="fixed bottom-4 left-4 z-50 xl:block">
       <div className="relative bg-firefly text-white rounded-xl p-3 border border-blue-100 shadow-lg min-w-[250px] max-w-[280px]">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-6 h-6 bg-teal text-firefly rounded-md flex items-center justify-center">
@@ -86,6 +97,31 @@ export const KeyringConnectLinks = () => {
           </Button>
 
           <div className="mt-2">
+            <p className="text-xs text-white/70 mb-1 mt-4">Environment</p>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="w-full items-center p-2 justify-between flex gap-2 h-8 text-xs text-white hover:text-firefly hover:bg-firefly-100 rounded-md">
+                {environment.toUpperCase()}
+                <ChevronRight className="w-3 h-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Select Environment</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setEnvironment("dev")}>
+                  DEV
+                  {environment === "dev" ? (
+                    <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
+                  ) : null}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setEnvironment("prod")}>
+                  PROD
+                  {environment === "prod" ? (
+                    <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
+                  ) : null}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="mt-2">
             <p className="text-xs text-white/70 mb-1 mt-4">
               Active Test Policy
             </p>
@@ -96,13 +132,13 @@ export const KeyringConnectLinks = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuLabel>Select Policy</DropdownMenuLabel>
-                {POLICIES.map((policy) => (
+                {policies.map((policy) => (
                   <DropdownMenuItem
                     key={policy.id}
-                    onClick={() => setPolicyId(policy.id)}
+                    onClick={() => setPolicy(policy)}
                   >
                     {policy.name}
-                    {policy.id === policyId ? (
+                    {selectedPolicy?.id === policy.id ? (
                       <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
                     ) : null}
                   </DropdownMenuItem>

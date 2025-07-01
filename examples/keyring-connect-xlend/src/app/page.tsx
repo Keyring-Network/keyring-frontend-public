@@ -29,9 +29,9 @@ export default function KeyringConnectDemo() {
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
-  const { policyId } = usePolicyStore();
+  const { policy } = usePolicyStore();
 
-  const { status: credentialStatus, error } = useCheckCredential(policyId);
+  const { status: credentialStatus, error } = useCheckCredential(policy.id);
 
   // Update flow state based on credential status
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function KeyringConnectDemo() {
 
               {shouldShowKeyringModule && (
                 <KeyringConnectModule
-                  policyId={policyId}
+                  policyId={policy.id}
                   flowState={flowState}
                   setFlowState={setFlowState}
                   address={address}
