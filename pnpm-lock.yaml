@@ -17,8 +17,8 @@ importers:
         specifier: ^2.4.0
         version: 2.4.0
       '@keyringnetwork/keyring-connect-sdk':
-        specifier: 2.3.0
-        version: 2.3.0
+        specifier: 3.0.1
+        version: 3.0.1
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.8.0
@@ -1016,10 +1016,8 @@ packages:
     resolution: {integrity: sha512-kGkpGf88EdV5kUI5ll8ETaHhQHNyHt5CsZ06CXU6p2+1bXJcG6bLIm8FsYL1s33HwN5TBXIl2up5csP2ZCt5GQ==}
     dev: false
 
-  /@keyringnetwork/keyring-connect-sdk@2.3.0:
-    resolution: {integrity: sha512-jM0CVcFIz9F5rGCQahjBoQJVk7KHgyOqN1baD4yNFkCyXWlGbsLuCCVS4ITaJ3pSwjJXaKQpRhw++oTVUahEeQ==}
-    dependencies:
-      '@keyringnetwork/contracts-abi': 2.4.0
+  /@keyringnetwork/keyring-connect-sdk@3.0.1:
+    resolution: {integrity: sha512-la+EbqARpkAaE40Blro8vNuDEgZWlEAB8MwQxk4VzE/ACo6tV/O+It3JwEU4PYTKszGdCJUP9mV7yDh5mgA1Ww==}
     dev: false
 
   /@lit-labs/ssr-dom-shim@1.3.0:
