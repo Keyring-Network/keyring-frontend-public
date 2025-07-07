@@ -14,7 +14,7 @@ import { CredentialUpdate } from "./CredentialUpdate";
 import {
   KrnSupportedChainId,
   SupportedChainIds,
-} from "@keyringnetwork/contracts-abi";
+} from "@keyringnetwork/keyring-connect-sdk";
 import { CaipNetworkId } from "@reown/appkit";
 import { getChainIdFromCaipNetworkId } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
