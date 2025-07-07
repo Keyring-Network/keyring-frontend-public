@@ -2,7 +2,7 @@ import { networks } from "@/config";
 import {
   getKrnDeploymentArtifact,
   KrnSupportedChainId,
-} from "@keyringnetwork/contracts-abi";
+} from "@keyringnetwork/keyring-connect-sdk";
 import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import { useMemo } from "react";
 import { useReadContract } from "wagmi";
@@ -37,7 +37,7 @@ export const useCheckCredentialEvm = (
 
   const { data, isPending, isError, error, refetch } = useReadContract({
     address: contract.address as `0x${string}`,
-    abi: contract.ABI,
+    abi: contract.ABI || [],
     functionName: "entityExp",
     args: [policyId, address!],
     query: {

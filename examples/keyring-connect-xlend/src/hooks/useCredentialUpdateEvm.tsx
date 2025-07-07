@@ -1,4 +1,8 @@
-import { CredentialData } from "@keyringnetwork/keyring-connect-sdk";
+import {
+  CredentialData,
+  getKrnDeploymentArtifact,
+  KrnSupportedChainId,
+} from "@keyringnetwork/keyring-connect-sdk";
 import { useEffect, useState } from "react";
 import {
   useSimulateContract,
@@ -7,10 +11,6 @@ import {
 } from "wagmi";
 import { useCheckCredential } from "./useCheckCredential";
 import { toast } from "sonner";
-import {
-  getKrnDeploymentArtifact,
-  KrnSupportedChainId,
-} from "@keyringnetwork/contracts-abi";
 import { Loader } from "lucide-react";
 import { createBlockExplorerAction } from "@/utils/blockExplorer";
 import { useAppKitNetwork } from "@reown/appkit/react";

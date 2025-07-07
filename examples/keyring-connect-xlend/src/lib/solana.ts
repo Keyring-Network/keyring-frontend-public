@@ -1,11 +1,11 @@
 import { BN, Program } from "@coral-xyz/anchor";
 import {
+  CredentialData,
   getKrnContractAddress,
   IDL_SOLANA,
   KeyringNetworkSolana,
   SupportedChainIds,
-} from "@keyringnetwork/contracts-abi";
-import { CredentialData } from "@keyringnetwork/keyring-connect-sdk";
+} from "@keyringnetwork/keyring-connect-sdk";
 import { keccak_256 } from "@noble/hashes/sha3";
 import { Connection, PublicKey } from "@solana/web3.js";
 
