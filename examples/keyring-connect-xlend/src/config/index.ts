@@ -5,12 +5,10 @@ import {
   mainnet,
   arbitrum,
   solana,
-  zksync,
   base,
   optimism,
   avalanche,
   polygon,
-  holesky,
 } from "@reown/appkit/networks";
 import type { AppKitNetwork } from "@reown/appkit/networks";
 import { Policy } from "@/types/keyring";
@@ -24,12 +22,10 @@ export const networks = [
   mainnet,
   arbitrum,
   solana,
-  zksync,
   base,
   optimism,
   avalanche,
   polygon,
-  holesky,
 ] as [AppKitNetwork, ...AppKitNetwork[]];
 
 //Set up the Wagmi Adapter (Config)
