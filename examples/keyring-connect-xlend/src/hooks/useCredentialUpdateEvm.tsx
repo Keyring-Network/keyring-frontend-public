@@ -63,7 +63,8 @@ export const useCredentialUpdateEvm = ({
     refetch: refetchSimulation,
   } = useSimulateContract({
     functionName: "createCredential",
-    abi: contract.ABI,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    abi: (contract.ABI as any[]) || [],
     value: BigInt(calldata.cost),
     args: [
       calldata.trader,
