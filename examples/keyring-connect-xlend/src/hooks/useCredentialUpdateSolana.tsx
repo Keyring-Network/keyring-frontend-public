@@ -259,6 +259,7 @@ export const useCredentialUpdateSolana = ({
       });
       setPendingToastId(toastId);
     } catch (error) {
+      console.error({ error });
       setIsBusy(false);
 
       if (error instanceof Error && error.message.includes("User rejected")) {
