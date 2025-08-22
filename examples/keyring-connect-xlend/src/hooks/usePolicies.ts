@@ -39,12 +39,24 @@ export const usePolicies = (): UsePoliciesResult => {
 
   // Handle all policy selection and update logic
   useEffect(() => {
-    if (policies.length > 0) {
+    // Only run validation when:
+    // 1. API call has completed (not loading) AND we have API data
+    // 2. OR API call failed/completed but we're using default policies
+    const shouldValidate = (!isLoading && data) || (!isLoading && !data);
+
+    if (shouldValidate && policies.length > 0) {
       const selectedPolicy = policies.find((p) => p.id === policy.id);
 
       // Case 1: No selected policy exists in current policies
       if (!selectedPolicy) {
-        setPolicy(policies[0]);
+        // Try to find the default policy in the current environment's policies
+        const defaultPolicy = policies.find(
+          (p) => p.id === DEFAULT_POLICIES[0].id
+        );
+
+        // If the default policy exists in this environment, use it
+        // Otherwise, fall back to the first available policy
+        setPolicy(defaultPolicy || policies[0]);
         return;
       }
 
@@ -62,7 +74,15 @@ export const usePolicies = (): UsePoliciesResult => {
         return;
       }
     }
-  }, [policies, policy.id, policy.public_key?.n, policy.costs, setPolicy]);
+  }, [
+    policies,
+    policy.id,
+    policy.public_key?.n,
+    policy.costs,
+    setPolicy,
+    isLoading,
+    data,
+  ]);
 
   return {
     policies,
