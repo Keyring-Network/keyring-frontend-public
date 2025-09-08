@@ -278,7 +278,6 @@ export default function SdkTestPage() {
       try {
         const keyringZKPG = await KeyringZKPG.getInstance(jsCrypto, snarkjs, {
           debug: true,
-          useLocalTime: true,
         });
         setKeyringZKPG(keyringZKPG);
       } catch (err: Error | unknown) {

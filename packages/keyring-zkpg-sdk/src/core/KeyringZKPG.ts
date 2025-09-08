@@ -9,9 +9,11 @@ import { circuit, crypto, domainobjs, utils } from "@keyringnetwork/circuits";
 import axios from "axios";
 import { toHex } from "viem";
 import { ArtifactStorage } from "../storage/ArtifactStorage";
+import { DEFAULT_CONFIG } from "../config/constants";
 import type {
   CredentialUpdateCalldata,
   KeyringZKPGArtifacts,
+  KeyringZKPGConfig,
   KeyringZKPGInput,
   KeyringZKPGOptions,
   KeyringZKPGOutput,
@@ -19,14 +21,6 @@ import type {
   Policy,
   RegimeKeySchema,
 } from "./types";
-
-const ZK_FILES_SOURCE = {
-  authorisationConstruction: [
-    "https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.01.zKey",
-    "https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.wasm",
-    "https://main.cdn.krnprod.net/AuthorisationConstruction/AuthorisationConstruction.public.sym.json",
-  ],
-};
 
 export class KeyringZKPG {
   private static nRegimes = 5;
@@ -37,6 +31,7 @@ export class KeyringZKPG {
   private artifactsFetchPromise: Promise<KeyringZKPGArtifacts> | null = null;
   private debugMode = false;
   private useLocalTime = false;
+  private config: KeyringZKPGConfig;
 
   private constructor(
     jsCrypto: ECCryptoSuite,
@@ -46,6 +41,21 @@ export class KeyringZKPG {
     this.storage = new ArtifactStorage();
     this.debugMode = !!options?.debug;
     this.useLocalTime = !!options?.useLocalTime;
+
+    // Merge user config with defaults
+    this.config = {
+      ...DEFAULT_CONFIG,
+      ...options?.config,
+      zkArtifacts: {
+        ...DEFAULT_CONFIG.zkArtifacts,
+        ...options?.config?.zkArtifacts,
+        authorisationConstruction: {
+          ...DEFAULT_CONFIG.zkArtifacts.authorisationConstruction,
+          ...options?.config?.zkArtifacts?.authorisationConstruction,
+        },
+      },
+    };
+
     this.injectExternalDependencies(jsCrypto, snarkJS);
   }
 
@@ -161,7 +171,8 @@ export class KeyringZKPG {
       this.log("Starting ZK artifacts fetching...");
 
       // Process authorisationConstruction artifacts
-      const fileList = ZK_FILES_SOURCE.authorisationConstruction;
+      const artifacts = this.config.zkArtifacts.authorisationConstruction;
+      const fileList = [artifacts.zKey, artifacts.wasm, artifacts.symbolMap];
 
       // Check if we already have this artifact cached
       const cachedArtifact = await this.storage.getArtifact().catch((error) => {
@@ -375,8 +386,9 @@ export class KeyringZKPG {
    * @param bufferMs Buffer in milliseconds to subtract (default: 6000ms = 6 seconds)
    * @returns Current time minus buffer in milliseconds
    */
-  private getTimeNow(bufferMs: number = 6000): number {
-    return Date.now() - bufferMs;
+  private getTimeNow(bufferMs?: number): number {
+    const buffer = bufferMs ?? this.config.timeBufferMs;
+    return Date.now() - buffer;
   }
 
   /**
@@ -385,9 +397,7 @@ export class KeyringZKPG {
    */
   private async getServerTime() {
     try {
-      const response = await axios.get(
-        "https://main.api.keyring-backend.krnprod.net/api/v1/policies/public"
-      );
+      const response = await axios.get(this.config.serverTimeEndpoint);
 
       const serverDate = response.headers.date;
 

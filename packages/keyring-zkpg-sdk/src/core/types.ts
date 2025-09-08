@@ -9,9 +9,33 @@ export interface Policy {
   cost: number;
 }
 
+export interface KeyringZKPGConfig {
+  /**
+   * API endpoint to get the server time
+   */
+  serverTimeEndpoint: string;
+
+  /**
+   * ZK artifacts CDN URLs
+   */
+  zkArtifacts: {
+    authorisationConstruction: {
+      zKey: string;
+      wasm: string;
+      symbolMap: string;
+    };
+  };
+
+  /**
+   * Time buffer for time calculations in milliseconds
+   */
+  timeBufferMs: number;
+}
+
 export interface KeyringZKPGOptions {
   debug?: boolean;
   useLocalTime?: boolean;
+  config?: Partial<KeyringZKPGConfig>;
 }
 
 export interface KeyringZKPGInput {
