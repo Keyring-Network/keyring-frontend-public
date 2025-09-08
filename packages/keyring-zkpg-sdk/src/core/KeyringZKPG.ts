@@ -3,11 +3,9 @@ import type {
   G1Point,
   Hexlified,
   SnarkJS,
+  SnarkJSGroth16Proof,
 } from "@keyringnetwork/circuits";
-import * as circuit from "@keyringnetwork/circuits/circuit";
-import * as crypto from "@keyringnetwork/circuits/crypto";
-import * as domainobjs from "@keyringnetwork/circuits/domainobjs";
-import { hexlifyBigInts } from "@keyringnetwork/circuits/utils";
+import { circuit, crypto, domainobjs, utils } from "@keyringnetwork/circuits";
 import axios from "axios";
 import { toHex } from "viem";
 import { ArtifactStorage } from "../storage/ArtifactStorage";
@@ -18,7 +16,7 @@ import type {
   KeyringZKPGOptions,
   KeyringZKPGOutput,
   KeyringZKPGStatus,
-  PublicKeySchema,
+  Policy,
   RegimeKeySchema,
 } from "./types";
 
@@ -38,6 +36,7 @@ export class KeyringZKPG {
   private abortController: AbortController | null = null;
   private artifactsFetchPromise: Promise<KeyringZKPGArtifacts> | null = null;
   private debugMode = false;
+  private useLocalTime = false;
 
   private constructor(
     jsCrypto: ECCryptoSuite,
@@ -46,6 +45,7 @@ export class KeyringZKPG {
   ) {
     this.storage = new ArtifactStorage();
     this.debugMode = !!options?.debug;
+    this.useLocalTime = !!options?.useLocalTime;
     this.injectExternalDependencies(jsCrypto, snarkJS);
   }
 
@@ -91,7 +91,7 @@ export class KeyringZKPG {
     proof: Hexlified<any>;
     publicSignals: string[];
 
-    witness: circuit.AuthorisationConstructionWitness;
+    witness: circuit.AuthorisationConstructionRSAWitness;
   }> {
     try {
       this.updateStatus("generating_proof");
@@ -241,43 +241,12 @@ export class KeyringZKPG {
 
   private getPolicyRegimes(regimeKey: RegimeKeySchema) {
     const key = [BigInt(regimeKey.x), BigInt(regimeKey.y)] as G1Point;
-    return [new domainobjs.Regime(key)];
-  }
 
-  private policyDomainObject(input: KeyringZKPGInput) {
-    const { policy } = input;
-
-    return new domainobjs.Policy(
-      policy.onchain_id,
-      policy.duration,
-      input.chainId,
-      policy.cost,
-      this.getPolicyRegimes(policy.regime_key)
+    return [new domainobjs.Regime(key)].concat(
+      Array(KeyringZKPG.nRegimes - 1).fill(
+        new domainobjs.Regime([BigInt(0), BigInt(0)])
+      )
     );
-  }
-
-  private async generateIdentity(
-    tradingWallet: string,
-    policy: domainobjs.Policy,
-    trapdoor?: bigint
-  ) {
-    try {
-      const _trapdoor = trapdoor || crypto.randomValue();
-
-      const identity = new domainobjs.Identity(
-        _trapdoor,
-        tradingWallet,
-        policy
-      );
-
-      return identity;
-    } catch (error) {
-      throw new Error("Failed to generate identity");
-    }
-  }
-
-  private getPolicyPublicModulus(publicKey: PublicKeySchema) {
-    return BigInt(publicKey.n);
   }
 
   private async generateZkProof(
@@ -285,20 +254,32 @@ export class KeyringZKPG {
   ): Promise<KeyringZKPGOutput> {
     try {
       this.log("Generating ZK proof...");
-      const policy = this.policyDomainObject(input);
-      this.log("Policy generated");
-      const identity = await this.generateIdentity(input.tradingWallet, policy);
-      this.log("Identity generated");
-      if (!identity) {
-        throw new Error("Failed to generate identity");
-      }
-
-      const witness = new circuit.AuthorisationConstructionWitness(
-        { nRegimes: KeyringZKPG.nRegimes },
-        identity,
-        this.getPolicyPublicModulus(input.policy.public_key),
-        undefined,
+      const policy = new domainobjs.Policy(
+        input.policy.onchain_id,
+        input.policy.duration,
+        input.chainId,
+        input.policy.cost,
         this.getPolicyRegimes(input.policy.regime_key)
+      );
+      this.log("Policy generated");
+
+      const serverTime = this.useLocalTime
+        ? this.getTimeNow()
+        : await this.getServerTime();
+
+      const validUntil = new Date(serverTime + policy.duration * 1000);
+
+      const authMessage = new domainobjs.AuthMessageRSA(
+        crypto.randomValue(),
+        BigInt(input.tradingWallet),
+        policy,
+        validUntil,
+        this.getRSAPublicKey(input.policy)
+      );
+
+      const witness = new circuit.AuthorisationConstructionRSAWitness(
+        { nRegimes: KeyringZKPG.nRegimes },
+        authMessage
       );
       this.log("Witness generated");
       const circuitSetup = await this.retrieveCircuit();
@@ -313,11 +294,12 @@ export class KeyringZKPG {
         throw new Error("Failed to generate circuit proof");
       }
 
-      const proof = circuit.AuthorisationConstructionProof.from(circuitProof);
+      const proof =
+        circuit.AuthorisationConstructionRSAProof.from(circuitProof);
       this.log("Proof generated");
-      const snarkjsProof = hexlifyBigInts(
+      const snarkjsProof = utils.hexlifyBigInts(
         proof.snarkjs_proof
-      ) as Hexlified<any>;
+      ) as Hexlified<SnarkJSGroth16Proof>;
       this.log("Proof hexlified");
 
       // Return the proof data instead of making the API call
@@ -336,41 +318,94 @@ export class KeyringZKPG {
     zkpgInput: KeyringZKPGInput,
     zkpgOutput: KeyringZKPGOutput
   ): Promise<CredentialUpdateCalldata> {
-    const blindedSignatureBuffer = Buffer.from(
-      blindedSignature.slice(2),
-      "hex"
-    );
-
     const { policy, tradingWallet, chainId } = zkpgInput;
     const { witness } = zkpgOutput;
-
-    const _signature = witness.unblindSignature(blindedSignatureBuffer);
-    const isValidSignature = await witness.verifySignature(_signature);
-
-    if (!isValidSignature) {
-      throw new Error("Invalid signature");
-    }
-
-    const signature = toHex(_signature);
-
     const authMessage = witness.authMessage;
-    const validUntil = authMessage.validUntil;
-    const cost = authMessage.cost;
-    const backdoor = toHex(authMessage.packedRegimeEncryptions);
-    const key = toHex(BigInt(policy.public_key.n));
 
-    const calldata: CredentialUpdateCalldata = {
+    const _signature = await this.getUnblindedSignature(
+      authMessage,
+      this.getRSAPublicKey(policy),
+      blindedSignature
+    );
+
+    const calldata = {
       trader: tradingWallet,
       onchainPolicyId: policy.onchain_id,
-      chainId,
-      validUntil,
-      cost,
-      key,
-      signature,
-      backdoor,
+      chainId: chainId,
+      validUntil: authMessage.validUntil,
+      cost: authMessage.cost,
+      key: policy.public_key.n,
+      signature: _signature,
+      backdoor: toHex(authMessage.packedRegimeEncryptions),
     };
 
     return calldata;
+  }
+
+  private getRSAPublicKey(policy: Policy) {
+    return new crypto.RSAPublicKey(
+      BigInt(policy.public_key.n),
+      BigInt(policy.public_key.e)
+    );
+  }
+
+  private async getUnblindedSignature(
+    authMessage: domainobjs.AuthMessageRSA,
+    rsaPublicKey: crypto.RSAPublicKey,
+    blindedSignature: string
+  ) {
+    const unblindedSignature = authMessage.unblindSignature(
+      new crypto.RSAGroupElement(rsaPublicKey.modulus, BigInt(blindedSignature))
+    );
+
+    const isValidSignature = await authMessage.verifySignature(
+      unblindedSignature
+    );
+
+    this.log({ message: "is valid signature", isValidSignature });
+
+    if (!isValidSignature) throw new Error("Invalid blinded signature");
+
+    return toHex(unblindedSignature.toBuffer());
+  }
+
+  /**
+   * Get current time with a buffer subtracted
+   * This helps account for network latency and clock drift
+   * @param bufferMs Buffer in milliseconds to subtract (default: 6000ms = 6 seconds)
+   * @returns Current time minus buffer in milliseconds
+   */
+  private getTimeNow(bufferMs: number = 6000): number {
+    return Date.now() - bufferMs;
+  }
+
+  /**
+   * Retrieves the server time from the server in milliseconds
+   * @returns The server time.
+   */
+  private async getServerTime() {
+    try {
+      const response = await axios.get(
+        "https://main.api.keyring-backend.krnprod.net/api/v1/policies/public"
+      );
+
+      const serverDate = response.headers.date;
+
+      if (!serverDate) {
+        this.log({
+          message: "No server date found, defaulting to client time",
+        });
+        return this.getTimeNow();
+      }
+
+      return new Date(serverDate).getTime();
+    } catch (error: any) {
+      this.log({
+        message: "Failed to get server time",
+        error: error?.message,
+      });
+      return this.getTimeNow();
+    }
   }
 
   /**

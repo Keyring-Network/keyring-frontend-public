@@ -21,7 +21,7 @@ import {
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { mainnet } from "viem/chains";
-import { SnarkJS } from "@keyringnetwork/circuits/types";
+import { SnarkJS } from "@keyringnetwork/circuits";
 
 const jsCrypto = {
   poseidon,
@@ -278,6 +278,7 @@ export default function SdkTestPage() {
       try {
         const keyringZKPG = await KeyringZKPG.getInstance(jsCrypto, snarkjs, {
           debug: true,
+          useLocalTime: true,
         });
         setKeyringZKPG(keyringZKPG);
       } catch (err: Error | unknown) {

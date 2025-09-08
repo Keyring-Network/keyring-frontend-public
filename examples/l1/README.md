@@ -20,9 +20,9 @@ pnpm install && pnpm dev
 ## Required Dependencies
 
 ```js
-"@iden3/js-crypto": "1.1.0",
-"@keyringnetwork/circuits": "3.0.2",
-"@keyringnetwork/keyring-zkpg-sdk": "^0.1.0",
+"@iden3/js-crypto": "1.3.1",
+"@keyringnetwork/circuits": "4.1.0",
+"@keyringnetwork/keyring-zkpg-sdk": "^1.0.0",
 "ffjavascript": "^0.3.1",
 "snarkjs": "0.7.5",
 ```

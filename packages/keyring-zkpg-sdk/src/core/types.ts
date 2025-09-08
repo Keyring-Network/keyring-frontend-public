@@ -1,5 +1,4 @@
-import * as circuit from '@keyringnetwork/circuits/circuit';
-import { Hexlified } from '@keyringnetwork/circuits';
+import { Hexlified, circuit } from "@keyringnetwork/circuits";
 
 export interface Policy {
   id: number;
@@ -12,6 +11,7 @@ export interface Policy {
 
 export interface KeyringZKPGOptions {
   debug?: boolean;
+  useLocalTime?: boolean;
 }
 
 export interface KeyringZKPGInput {
@@ -23,7 +23,7 @@ export interface KeyringZKPGInput {
 export interface KeyringZKPGOutput {
   proof: Hexlified<any>;
   publicSignals: string[];
-  witness: circuit.AuthorisationConstructionWitness;
+  witness: circuit.AuthorisationConstructionRSAWitness;
 }
 
 export interface CredentialUpdateCalldata {
@@ -38,11 +38,11 @@ export interface CredentialUpdateCalldata {
 }
 
 export type KeyringZKPGStatus =
-  | 'idle'
-  | 'prefetching_files'
-  | 'generating_proof'
-  | 'proofs_ready'
-  | 'error';
+  | "idle"
+  | "prefetching_files"
+  | "generating_proof"
+  | "proofs_ready"
+  | "error";
 
 export interface KeyringZKPGArtifacts {
   zKey: Uint8Array;

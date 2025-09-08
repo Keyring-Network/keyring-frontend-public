@@ -17,8 +17,8 @@ pnpm add @keyringnetwork/keyring-zkpg-sdk
 These are the dependencies that are required to be installed in the frontend project that uses this SDK.
 
 ```js
-"@iden3/js-crypto": "1.1.0",
-"@keyringnetwork/circuits": "3.0.2",
+"@iden3/js-crypto": "1.3.1",
+"@keyringnetwork/circuits": "4.0.1",
 "ffjavascript": "^0.3.1",
 "snarkjs": "0.7.5",
 ```
