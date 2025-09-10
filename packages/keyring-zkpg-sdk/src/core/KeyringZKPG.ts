@@ -23,7 +23,7 @@ import type {
 } from "./types";
 
 export class KeyringZKPG {
-  private static nRegimes = 5;
+  private static nRegimes = 1;
   private static instance: KeyringZKPG | null = null;
   private storage: ArtifactStorage;
   private status: KeyringZKPGStatus | null = null;
