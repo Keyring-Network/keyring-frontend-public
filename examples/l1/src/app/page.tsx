@@ -21,7 +21,7 @@ import {
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { mainnet } from "viem/chains";
-import { SnarkJS } from "@keyringnetwork/circuits/types";
+import { SnarkJS } from "@keyringnetwork/circuits";
 
 const jsCrypto = {
   poseidon,

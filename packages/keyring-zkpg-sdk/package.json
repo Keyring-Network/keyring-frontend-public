@@ -1,6 +1,9 @@
 {
   "name": "@keyringnetwork/keyring-zkpg-sdk",
-  "version": "0.2.0",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -9,7 +12,7 @@
     "release": "pnpm build && npm publish"
   },
   "dependencies": {
-    "@keyringnetwork/circuits": "3.0.2",
+    "@keyringnetwork/circuits": "4.1.0",
     "axios": "^1.7.7",
     "viem": "^2.21.44"
   },
