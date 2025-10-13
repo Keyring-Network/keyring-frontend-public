@@ -5,7 +5,11 @@ import {
   Policy,
   PolicyType,
 } from "@/types/keyring";
-import { DEFAULT_POLICIES } from "@/config";
+import {
+  DEFAULT_POLICIES,
+  KEYRING_API_BASE_URL_DEV,
+  KEYRING_API_BASE_URL_PROD,
+} from "@/config";
 import { useEnvironmentStore } from "./store/useEnvironmentStore";
 import { usePolicyStore } from "./store/usePolicyStore";
 
@@ -17,9 +21,10 @@ type UsePoliciesResult = {
 };
 
 const getPolicies = async (env: "prod" | "dev") => {
-  const response = await fetch(
-    `https://main.api.keyring-backend.krn${env}.net/api/v1/policies/public`
-  );
+  const apiUrl =
+    env === "prod" ? KEYRING_API_BASE_URL_PROD : KEYRING_API_BASE_URL_DEV;
+
+  const response = await fetch(`${apiUrl}/api/v1/policies/public`);
   return (await response.json()) as PaginatedResponseSchema_PolicySchema;
 };
 

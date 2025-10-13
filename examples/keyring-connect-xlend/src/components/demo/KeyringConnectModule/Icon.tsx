@@ -1,16 +1,10 @@
-import { ShieldCheck, Blocks, UserIcon } from "lucide-react";
+import { ShieldCheck, UserIcon } from "lucide-react";
 import { FlowState } from "@/app/page";
 
 export function Icon({ flowState }: { flowState: FlowState }) {
   const renderIcon = () => {
     switch (flowState) {
-      case "install":
-        return (
-          <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-            <Blocks className="h-6 w-6 text-gray-500" />
-          </div>
-        );
-      case "start":
+      case "no-credential":
         return (
           <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
             <UserIcon className="h-6 w-6 text-gray-500" />
