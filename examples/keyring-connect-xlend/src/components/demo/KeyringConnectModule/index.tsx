@@ -3,23 +3,26 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  KeyringConnect,
-  ExtensionSDKConfig,
   CredentialData,
+  VerificationSession,
+  KrnSupportedChainId,
+  SupportedChainIds,
+  SessionConfig,
 } from "@keyringnetwork/keyring-connect-sdk";
 import { Icon } from "./Icon";
 import { FlowState } from "@/app/page";
 import { KeyringLogo } from "@/components/ui/keyring-logo";
 import { CredentialUpdate } from "./CredentialUpdate";
-import {
-  KrnSupportedChainId,
-  SupportedChainIds,
-} from "@keyringnetwork/keyring-connect-sdk";
 import { CaipNetworkId } from "@reown/appkit";
 import { getChainIdFromCaipNetworkId } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
+import {
+  KEYRING_API_BASE_URL_DEV,
+  KEYRING_API_KEY,
+  KEYRING_USER_APP_URL_DEV,
+} from "@/config";
 interface KeyringConnectModuleProps {
   policyId: number;
   address?: string;
@@ -44,6 +47,8 @@ export function KeyringConnectModule({
 }: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
+  const [verificationSession, setVerificationSession] =
+    useState<VerificationSession | null>(null);
 
   const { environment } = useEnvironmentStore();
   const { policy } = usePolicyStore();
@@ -71,30 +76,6 @@ export function KeyringConnectModule({
     [address, policyId, chainId, policy]
   );
 
-  // Subscribe to the extension state changes
-  useEffect(() => {
-    const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
-      if (!state) {
-        setFlowState("install");
-        return;
-      }
-
-      const { credentialData } = state;
-
-      if (credentialData && validCredentialData(credentialData)) {
-        setFlowState("calldata-ready");
-        setCalldata(credentialData);
-      } else if (flowState !== "progress") {
-        setCalldata(null);
-        setFlowState("start");
-      }
-    });
-
-    return unsubscribe; // Cleanup on unmount
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validCredentialData, flowState, environment]);
-
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
   // If the extension is not installed, the user will be redirected to the extension's install page.
@@ -119,7 +100,7 @@ export function KeyringConnectModule({
     }
 
     try {
-      const exampleConfig: ExtensionSDKConfig = {
+      const exampleConfig: SessionConfig = {
         app_url: window.location.origin,
         name: "xLend",
         logo_url: `${window.location.origin}/xlend-icon.svg`,
@@ -128,12 +109,14 @@ export function KeyringConnectModule({
           chain_id: chainId as KrnSupportedChainId,
           wallet_address: address,
         },
+        api_key: KEYRING_API_KEY,
+        // "MWFXcGJCdU06MHU1Z0NYb2w3MlZuRG5yLUZ5RGMxODNNZzRlVlNLV1VMNU1ESTdBLVpHV0FaZXNEeS1PUnpfN1lvQml3Rm1lZnd0aFlTdU9iZVRodF9QQ0o1WVluOFE=",
         // NOTE: This `krn_config` is only required for development purposes and needs to be removed in production.
         krn_config:
           environment === "dev"
             ? {
-                keyring_api_url: "https://main.api.keyring-backend.krndev.net",
-                keyring_user_app_url: "https://app.keyringdev.network",
+                keyring_api_url: KEYRING_API_BASE_URL_DEV,
+                keyring_user_app_url: KEYRING_USER_APP_URL_DEV,
               }
             : undefined,
       };
@@ -142,9 +125,27 @@ export function KeyringConnectModule({
       setFlowState("progress");
       setCalldata(null);
 
-      await KeyringConnect.launchExtension(exampleConfig);
+      const session = await VerificationSession.launch(exampleConfig);
+      setVerificationSession(session);
+      const credentialData = await session.start();
+
+      if (credentialData && validCredentialData(credentialData)) {
+        setFlowState("calldata-ready");
+        setCalldata(credentialData);
+      } else {
+        setFlowState("no-credential");
+      }
     } catch (error) {
       console.error("Failed to launch extension:", error);
+      setFlowState("no-credential");
+    }
+  };
+
+  const cancelVerification = async () => {
+    if (verificationSession) {
+      await verificationSession.close();
+      setVerificationSession(null);
+      setFlowState("no-credential");
     }
   };
 
@@ -163,19 +164,7 @@ export function KeyringConnectModule({
 
   const renderKeyringConnectModule = () => {
     switch (flowState) {
-      case "install":
-        return (
-          <>
-            <h3 className="font-medium text-gray-900">Verification Required</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Install the Keyring extension to complete identity verification.
-            </p>
-            <Button className="mt-3" onClick={() => launchExtension()}>
-              Install Extension
-            </Button>
-          </>
-        );
-      case "start":
+      case "no-credential":
         return (
           <>
             <h3 className="font-medium text-gray-900">
@@ -207,12 +196,7 @@ export function KeyringConnectModule({
                 : "After the verification you can continue here."}
             </p>
             <div className="flex gap-2 justify-end mt-3">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setFlowState("start");
-                }}
-              >
+              <Button variant="ghost" onClick={cancelVerification}>
                 Cancel
               </Button>
             </div>
@@ -238,15 +222,13 @@ export function KeyringConnectModule({
             </>
           )
         );
-      case "no-credential":
       case "loading":
       default:
         return null;
     }
   };
 
-  const shouldShowSkeleton =
-    flowState === "no-credential" || flowState === "loading" || !flowState;
+  const shouldShowSkeleton = flowState === "loading" || !flowState;
 
   return (
     <div className="flex flex-col gap-4 p-6 border rounded-lg animate-slideDown bg-white border-gray-200">

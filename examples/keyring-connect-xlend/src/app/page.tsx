@@ -17,8 +17,6 @@ export type FlowState =
   | "loading"
   | "error"
   | "no-credential"
-  | "install"
-  | "start"
   | "progress"
   | "calldata-ready"
   | "transaction-pending"
@@ -70,8 +68,6 @@ export default function KeyringConnectDemo() {
     !!flowState &&
     [
       "no-credential",
-      "install",
-      "start",
       "progress",
       "calldata-ready",
       "transaction-pending",
