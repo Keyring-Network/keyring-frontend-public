@@ -18,7 +18,11 @@ import { getChainIdFromCaipNetworkId } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
-import { KEYRING_API_BASE_URL_DEV, KEYRING_USER_APP_URL_DEV } from "@/config";
+import {
+  KEYRING_API_BASE_URL_DEV,
+  KEYRING_API_KEY,
+  KEYRING_USER_APP_URL_DEV,
+} from "@/config";
 interface KeyringConnectModuleProps {
   policyId: number;
   address?: string;
@@ -43,7 +47,8 @@ export function KeyringConnectModule({
 }: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
-  const [verificationSession, setVerificationSession] = useState<VerificationSession | null>(null);
+  const [verificationSession, setVerificationSession] =
+    useState<VerificationSession | null>(null);
 
   const { environment } = useEnvironmentStore();
   const { policy } = usePolicyStore();
@@ -104,13 +109,15 @@ export function KeyringConnectModule({
           chain_id: chainId as KrnSupportedChainId,
           wallet_address: address,
         },
+        api_key: KEYRING_API_KEY,
+        // "MWFXcGJCdU06MHU1Z0NYb2w3MlZuRG5yLUZ5RGMxODNNZzRlVlNLV1VMNU1ESTdBLVpHV0FaZXNEeS1PUnpfN1lvQml3Rm1lZnd0aFlTdU9iZVRodF9QQ0o1WVluOFE=",
         // NOTE: This `krn_config` is only required for development purposes and needs to be removed in production.
         krn_config:
           environment === "dev"
             ? {
-              keyring_api_url: KEYRING_API_BASE_URL_DEV,
-              keyring_user_app_url: KEYRING_USER_APP_URL_DEV,
-            }
+                keyring_api_url: KEYRING_API_BASE_URL_DEV,
+                keyring_user_app_url: KEYRING_USER_APP_URL_DEV,
+              }
             : undefined,
       };
 
@@ -128,7 +135,6 @@ export function KeyringConnectModule({
       } else {
         setFlowState("no-credential");
       }
-
     } catch (error) {
       console.error("Failed to launch extension:", error);
       setFlowState("no-credential");
@@ -141,7 +147,7 @@ export function KeyringConnectModule({
       setVerificationSession(null);
       setFlowState("no-credential");
     }
-  }
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -190,10 +196,7 @@ export function KeyringConnectModule({
                 : "After the verification you can continue here."}
             </p>
             <div className="flex gap-2 justify-end mt-3">
-              <Button
-                variant="ghost"
-                onClick={cancelVerification}
-              >
+              <Button variant="ghost" onClick={cancelVerification}>
                 Cancel
               </Button>
             </div>
