@@ -110,14 +110,13 @@ export function KeyringConnectModule({
           wallet_address: address,
         },
         api_key: KEYRING_API_KEY,
-        // "MWFXcGJCdU06MHU1Z0NYb2w3MlZuRG5yLUZ5RGMxODNNZzRlVlNLV1VMNU1ESTdBLVpHV0FaZXNEeS1PUnpfN1lvQml3Rm1lZnd0aFlTdU9iZVRodF9QQ0o1WVluOFE=",
         // NOTE: This `krn_config` is only required for development purposes and needs to be removed in production.
         krn_config:
           environment === "dev"
             ? {
-                keyring_api_url: KEYRING_API_BASE_URL_DEV,
-                keyring_user_app_url: KEYRING_USER_APP_URL_DEV,
-              }
+              keyring_api_url: KEYRING_API_BASE_URL_DEV,
+              keyring_user_app_url: KEYRING_USER_APP_URL_DEV,
+            }
             : undefined,
       };
 
