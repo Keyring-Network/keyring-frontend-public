@@ -14,8 +14,8 @@ importers:
         specifier: 0.29.0
         version: 0.29.0(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@keyringnetwork/keyring-connect-sdk':
-        specifier: ^3.2.0
-        version: 3.2.0
+        specifier: 4.1.0-alpha.1
+        version: 4.1.0-alpha.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.8.0
@@ -704,8 +704,12 @@ packages:
   '@keyringnetwork/contracts-abi@2.6.0':
     resolution: {integrity: sha512-Wu1I6UjGOjJV6itJuJxPoMj6w117yCwSRI1Mkr4AM9eFAu0oQuObiC2DbIeVEj9/QeAVgjNVNk/cX5Laz9xmQg==}
 
-  '@keyringnetwork/keyring-connect-sdk@3.2.0':
-    resolution: {integrity: sha512-8yj+VWTcKvocvdSHW4nWBWrHz8xSsn0rF89mjdN3swp2yGfGlicAwxbrttWOXfeOydIIw4zAdzEfC8XXC/z0Dg==}
+  '@keyringnetwork/keyring-connect-sdk@4.1.0-alpha.1':
+    resolution: {integrity: sha512-gxCBTY3jDR45SlTU8QvKXdGeZdfYsHKvqelcKlZL5K9Cuey+f7txwpsQrdFqsfHAaXre4mQzoFL9+gxtUuhKvA==}
+
+  '@keyringnetwork/keyring-dtos@0.7.2':
+    resolution: {integrity: sha512-od8pWLm3AcqacWQC9muh4XfLwFOVrxvjsr2T9Y+nUvDocx2RZyeMaSvBT5KfeBKWUSdKZuzijRO1D7dLqpLcDA==}
+    engines: {node: '>=18.0.0'}
 
   '@lit-labs/ssr-dom-shim@1.4.0':
     resolution: {integrity: sha512-ficsEARKnmmW5njugNYKipTm4SFnbik7CXtoencDZzmzo/dQ+2Q0bgkzJuoJP20Aj0F+izzJjOqsnkd6F/o1bw==}
@@ -990,6 +994,9 @@ packages:
 
   '@phosphor-icons/webcomponents@2.1.5':
     resolution: {integrity: sha512-JcvQkZxvcX2jK+QCclm8+e8HXqtdFW9xV4/kk2aL9Y3dJA2oQVt+pzbv1orkumz3rfx4K9mn9fDoMr1He1yr7Q==}
+
+  '@pinojs/redact@0.4.0':
+    resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -3842,6 +3849,9 @@ packages:
   lit@3.3.0:
     resolution: {integrity: sha512-DGVsqsOIHBww2DqnuZzW7QsuCdahp50ojuDaBPC7jUDRpYoH0z7kHBBYZewRzer75FwtrkmkKk7iOAwSaWdBmw==}
 
+  lit@3.3.2:
+    resolution: {integrity: sha512-NF9zbsP79l4ao2SNrH3NkfmFgN/hBYSQo90saIVI1o5GpjAdCPVstVzO1MrLOakHoEhYkrtRjPK6Ob521aoYWQ==}
+
   locate-path@5.0.0:
     resolution: {integrity: sha512-t7hw9pI+WvuwNJXwk5zVHpyhIqzg2qTlklJOf0mVxGSbe3Fp2VieZcduNYjaLDoy6p9uGpQEGWG87WpMKlNq8g==}
     engines: {node: '>=8'}
@@ -4143,6 +4153,10 @@ packages:
   on-exit-leak-free@0.2.0:
     resolution: {integrity: sha512-dqaz3u44QbRXQooZLTUKU41ZrzYrcvLISVgbrzbyCMxpmSLJvZ3ZamIJIZ29P6OhZIkNIQKosdeM6t1LYbA9hg==}
 
+  on-exit-leak-free@2.1.2:
+    resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
+    engines: {node: '>=14.0.0'}
+
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
 
@@ -4320,11 +4334,21 @@ packages:
   pino-abstract-transport@0.5.0:
     resolution: {integrity: sha512-+KAgmVeqXYbTtU2FScx1XS3kNyfZ5TrXY07V96QnUSFqo2gAqlvmaxH67Lj7SWazqsMabf+58ctdTcBgnOLUOQ==}
 
+  pino-abstract-transport@2.0.0:
+    resolution: {integrity: sha512-F63x5tizV6WCh4R6RHyi2Ml+M70DNRXt/+HANowMflpgGFMAym/VKm6G7ZOQRjqN7XbGxK1Lg9t6ZrtzOaivMw==}
+
   pino-std-serializers@4.0.0:
     resolution: {integrity: sha512-cK0pekc1Kjy5w9V2/n+8MkZwusa6EyyxfeQCB799CQRhRt/CqYKiWs5adeu8Shve2ZNffvfC/7J64A2PJo1W/Q==}
 
+  pino-std-serializers@7.1.0:
+    resolution: {integrity: sha512-BndPH67/JxGExRgiX1dX0w1FvZck5Wa4aal9198SrRhZjH3GxKQUKIBnYJTdj2HDN3UQAS06HlfcSbQj2OHmaw==}
+
   pino@7.11.0:
     resolution: {integrity: sha512-dMACeu63HtRLmCG8VKdy4cShCPKaYDR4youZqoSWLxl5Gu99HUw8bw75thbPv9Nip+H+QYX8o3ZJbTdVZZ2TVg==}
+    hasBin: true
+
+  pino@9.14.0:
+    resolution: {integrity: sha512-8OEwKp5juEvb/MjpIc4hjqfgCNysrS94RIOMXYvpYCdm/jglrKEiAYmiumbmGhCvs+IcInsphYDFwqrjr7398w==}
     hasBin: true
 
   pirates@4.0.7:
@@ -4434,6 +4458,9 @@ packages:
   process-warning@1.0.0:
     resolution: {integrity: sha512-du4wfLyj4yCZq1VupnVSZmRsPJsNuxoDQFdCFHLaYiEbFBD7QE0a+I4D7hOxrVnh78QE/YipFAj9lXHiXocV+Q==}
 
+  process-warning@5.0.0:
+    resolution: {integrity: sha512-a39t9ApHNx2L4+HBnQKqxxHNs1r7KF+Intd8Q/g1bUh6q0WIp9voPXJ/x0j+ZL45KF1pJd9+q2jLIRMfvEshkA==}
+
   prop-types@15.8.1:
     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
 
@@ -4456,6 +4483,13 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  qr-code-styling@1.9.2:
+    resolution: {integrity: sha512-RgJaZJ1/RrXJ6N0j7a+pdw3zMBmzZU4VN2dtAZf8ZggCfRB5stEQ3IoDNGaNhYY3nnZKYlYSLl5YkfWN5dPutg==}
+    engines: {node: '>=18.18.0'}
+
+  qrcode-generator@1.5.2:
+    resolution: {integrity: sha512-pItrW0Z9HnDBnFmgiNrY1uxRdri32Uh9EjNYLPVC2zZ3ZRIIEqBoDgm4DkvDwNNDHTK7FNkmr8zAa77BYc9xNw==}
 
   qrcode@1.5.3:
     resolution: {integrity: sha512-puyri6ApkEHYiVl4CFzo1tDkAZ+ATcnbJrJ6RiBM1Fhctdn/ix9MTE3hRph33omisEbC/2fcfemsseiKgBPKZg==}
@@ -4548,6 +4582,10 @@ packages:
 
   real-require@0.1.0:
     resolution: {integrity: sha512-r/H9MzAWtrv8aSVjPCMFpDMl5q66GqtmmRkRjpHTsp4zBAa+snZyiQNlMONiUmEJcsnaw0wCauJ2GWODr/aFkg==}
+    engines: {node: '>= 12.13.0'}
+
+  real-require@0.2.0:
+    resolution: {integrity: sha512-57frrGM/OCTLqLOAh0mhVA9VBMHd+9U7Zb2THMGdBUoZVOtGbJzjxsYGDJ3A9AYYCP4hn6y1TVbaOfzWtm5GFg==}
     engines: {node: '>= 12.13.0'}
 
   reflect.getprototypeof@1.0.10:
@@ -4769,6 +4807,9 @@ packages:
   sonic-boom@2.8.0:
     resolution: {integrity: sha512-kuonw1YOYYNOve5iHdSahXPOK49GqwA+LZhI6Wz/l0rP57iKyXXIHaRagOBHAPmGwJC6od2Z9zgvZ5loSgMlVg==}
 
+  sonic-boom@4.2.0:
+    resolution: {integrity: sha512-INb7TM37/mAcsGmc9hyyI6+QR3rR1zVRu36B0NeGXKnOOLiZOfER5SA+N7X7k3yUYRzLWafduTDvJAfDswwEww==}
+
   sonner@2.0.7:
     resolution: {integrity: sha512-W6ZN4p58k8aDKA4XPcx2hpIQXBRAgyiWVkYhT7CvK6D3iAu7xjvVyhQHg2/iaKJZ1XVJ4r7XuwGL+WGEK37i9w==}
     peerDependencies:
@@ -4959,6 +5000,9 @@ packages:
 
   thread-stream@0.15.2:
     resolution: {integrity: sha512-UkEhKIg2pD+fjkHQKyJO3yoIvAP3N6RlNFt2dUhcS1FGvCD1cQa1M/PGknCLFIyZdtJOWQjejp7bdNqmN7zwdA==}
+
+  thread-stream@3.1.0:
+    resolution: {integrity: sha512-OqyPZ9u96VohAyMfJykzmivOrY2wfMSf3C5TtFJVgN+Hm6aj+voFhlK+kZEIv2FBh1X6Xp3DlnCOfEQ3B2J86A==}
 
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
@@ -6023,9 +6067,22 @@ snapshots:
 
   '@keyringnetwork/contracts-abi@2.6.0': {}
 
-  '@keyringnetwork/keyring-connect-sdk@3.2.0':
+  '@keyringnetwork/keyring-connect-sdk@4.1.0-alpha.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@keyringnetwork/contracts-abi': 2.6.0
+      '@keyringnetwork/keyring-dtos': 0.7.2
+      axios: 1.12.2
+      lit: 3.3.2
+      pino: 9.14.0
+      qr-code-styling: 1.9.2
+      socket.io-client: 4.8.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
+
+  '@keyringnetwork/keyring-dtos@0.7.2': {}
 
   '@lit-labs/ssr-dom-shim@1.4.0': {}
 
@@ -6347,6 +6404,8 @@ snapshots:
   '@phosphor-icons/webcomponents@2.1.5':
     dependencies:
       lit: 3.3.0
+
+  '@pinojs/redact@0.4.0': {}
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -11519,6 +11578,12 @@ snapshots:
       lit-element: 4.2.1
       lit-html: 3.3.1
 
+  lit@3.3.2:
+    dependencies:
+      '@lit/reactive-element': 2.1.1
+      lit-element: 4.2.1
+      lit-html: 3.3.1
+
   locate-path@5.0.0:
     dependencies:
       p-locate: 4.1.0
@@ -11807,6 +11872,8 @@ snapshots:
 
   on-exit-leak-free@0.2.0: {}
 
+  on-exit-leak-free@2.1.2: {}
+
   once@1.4.0:
     dependencies:
       wrappy: 1.0.2
@@ -12079,7 +12146,13 @@ snapshots:
       duplexify: 4.1.3
       split2: 4.2.0
 
+  pino-abstract-transport@2.0.0:
+    dependencies:
+      split2: 4.2.0
+
   pino-std-serializers@4.0.0: {}
+
+  pino-std-serializers@7.1.0: {}
 
   pino@7.11.0:
     dependencies:
@@ -12094,6 +12167,20 @@ snapshots:
       safe-stable-stringify: 2.5.0
       sonic-boom: 2.8.0
       thread-stream: 0.15.2
+
+  pino@9.14.0:
+    dependencies:
+      '@pinojs/redact': 0.4.0
+      atomic-sleep: 1.0.0
+      on-exit-leak-free: 2.1.2
+      pino-abstract-transport: 2.0.0
+      pino-std-serializers: 7.1.0
+      process-warning: 5.0.0
+      quick-format-unescaped: 4.0.4
+      real-require: 0.2.0
+      safe-stable-stringify: 2.5.0
+      sonic-boom: 4.2.0
+      thread-stream: 3.1.0
 
   pirates@4.0.7: {}
 
@@ -12198,6 +12285,8 @@ snapshots:
 
   process-warning@1.0.0: {}
 
+  process-warning@5.0.0: {}
+
   prop-types@15.8.1:
     dependencies:
       loose-envify: 1.4.0
@@ -12229,6 +12318,12 @@ snapshots:
       once: 1.4.0
 
   punycode@2.3.1: {}
+
+  qr-code-styling@1.9.2:
+    dependencies:
+      qrcode-generator: 1.5.2
+
+  qrcode-generator@1.5.2: {}
 
   qrcode@1.5.3:
     dependencies:
@@ -12331,6 +12426,8 @@ snapshots:
   readdirp@4.1.2: {}
 
   real-require@0.1.0: {}
+
+  real-require@0.2.0: {}
 
   reflect.getprototypeof@1.0.10:
     dependencies:
@@ -12686,6 +12783,10 @@ snapshots:
     dependencies:
       atomic-sleep: 1.0.0
 
+  sonic-boom@4.2.0:
+    dependencies:
+      atomic-sleep: 1.0.0
+
   sonner@2.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       react: 19.2.0
@@ -12903,6 +13004,10 @@ snapshots:
   thread-stream@0.15.2:
     dependencies:
       real-require: 0.1.0
+
+  thread-stream@3.1.0:
+    dependencies:
+      real-require: 0.2.0
 
   through@2.3.8: {}
 
