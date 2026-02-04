@@ -17,6 +17,7 @@ export type PublicKeySchema = {
 
 export interface Policy {
   name: string;
+  onchain_id: number;
   id: number;
   costs?: PolicyCostSchema[];
   policy_type?: PolicyType;
