@@ -11,5 +11,8 @@
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
+  },
+  "dependencies": {
+    "@keyringnetwork/data-sharing-sdk": "link:../../Library/pnpm/global/5/node_modules/@keyringnetwork/data-sharing-sdk"
   }
 }

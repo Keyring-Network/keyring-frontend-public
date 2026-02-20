@@ -1,154 +1,205 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { DataSharingSDK, Session, SessionResult, SessionStatus, DataSharingError } from '@keyringnetwork/data-sharing-sdk';
-
-interface UseDataSharingOptions {
-  requestedFields: string[];
-  datasourceId?: string;
-  onComplete?: (data: SessionResult) => void;
-  onError?: (error: DataSharingError) => void;
-}
-
-interface UseDataSharingReturn {
-  session: Session | null;
-  status: SessionStatus | null;
-  result: SessionResult | null;
-  error: DataSharingError | null;
-  isLoading: boolean;
-  startVerification: () => Promise<void>;
-  reset: () => void;
-}
+import { useState, useCallback, useRef, useEffect } from "react";
+import {
+  Session,
+  SessionStatus,
+  DataSharingError,
+} from "@keyringnetwork/data-sharing-sdk";
+import {
+  BackendSessionResult,
+  DataSharingFlowType,
+  UseDataSharingOptions,
+  UseDataSharingReturn,
+} from "@/types";
+import { Api } from "@/helpers/api";
+import { useBackendPolling } from "@/hooks/dataSharing/useBackendPolling";
+import { useSessionLifecycle } from "@/hooks/dataSharing/useSessionLifecycle";
+import { useSdkSession } from "@/hooks/dataSharing/useSdkSession";
+import { normalizeDataSharingError } from "@/lib/dataSharing/normalizeError";
 
 /**
  * React hook for Keyring Data Sharing SDK
  * Manages session lifecycle, WebSocket connection, and state
  */
-export function useDataSharing(options: UseDataSharingOptions): UseDataSharingReturn {
+export function useDataSharing(
+  options: UseDataSharingOptions,
+): UseDataSharingReturn {
+  const apiClientRef = useRef<Api>(new Api());
+  const apiClient = apiClientRef.current;
+
   const [session, setSession] = useState<Session | null>(null);
   const [status, setStatus] = useState<SessionStatus | null>(null);
-  const [result, setResult] = useState<SessionResult | null>(null);
+  const [result, setResult] = useState<BackendSessionResult | null>(null);
   const [error, setError] = useState<DataSharingError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const sdkRef = useRef<DataSharingSDK | null>(null);
-  const connectionRef = useRef<{ disconnect: () => void } | null>(null);
+  const [flowType, setFlowType] = useState<DataSharingFlowType | null>(null);
+  const onCompleteRef = useRef(options.onComplete);
+  const onErrorRef = useRef(options.onError);
 
-  // Initialize SDK once
   useEffect(() => {
-    const apiKey = process.env.NEXT_PUBLIC_KEYRING_API_KEY;
-    if (!apiKey) {
-      setError(new DataSharingError('INVALID_CONFIG', 'API key not configured'));
-      return;
-    }
+    onCompleteRef.current = options.onComplete;
+    onErrorRef.current = options.onError;
+  }, [options.onComplete, options.onError]);
 
-    sdkRef.current = new DataSharingSDK({
-      apiKey,
-      environment: (process.env.NEXT_PUBLIC_KEYRING_ENV as any) || 'production',
-      debug: process.env.NODE_ENV === 'development'
-    });
-
-    return () => {
-      // Cleanup connections on unmount
-      connectionRef.current?.disconnect();
-      sdkRef.current?.disconnectAll();
-    };
+  const handleInvalidConfig = useCallback((configError: DataSharingError) => {
+    setError(configError);
   }, []);
+
+  const { sdkRef } = useSdkSession({
+    requestedFields: options.requestedFields,
+    datasourceId: options.datasourceId,
+    onInvalidConfig: handleInvalidConfig,
+  });
+
+  const { startBackendPolling } = useBackendPolling({
+    apiClient,
+    onStatusChange: setStatus,
+    onResult: setResult,
+    onComplete: (data) => onCompleteRef.current?.(data),
+    onTimeout: setError,
+  });
+
+  const {
+    activeSessionIdRef,
+    connectionRef,
+    cleanupSession,
+    disconnectActiveSession,
+  } = useSessionLifecycle({
+    apiClient,
+    sdkRef,
+    setSession,
+    setStatus,
+    setResult,
+    setError,
+    setIsLoading,
+  });
+
+  const connectToSession = useCallback(
+    (sessionId: string, sessionToken: string) => {
+      if (!sdkRef.current) {
+        return;
+      }
+
+      const connection = sdkRef.current.connect(sessionId, sessionToken, {
+        onStatusChange: (newStatus, data) => {
+          setStatus(newStatus);
+
+          if (newStatus === "processing_completed" && data) {
+            disconnectActiveSession();
+          }
+
+          if (
+            newStatus === "processing_failed" ||
+            newStatus === "session_expired"
+          ) {
+            disconnectActiveSession();
+          }
+        },
+        onError: (err) => {
+          setError(err);
+          onErrorRef.current?.(err);
+        },
+      });
+
+      connectionRef.current = connection;
+    },
+    [connectionRef, disconnectActiveSession, sdkRef],
+  );
 
   const startVerification = useCallback(async () => {
     if (!sdkRef.current) {
-      setError(new DataSharingError('INVALID_CONFIG', 'SDK not initialized'));
+      setError(new DataSharingError("INVALID_CONFIG", "SDK not initialized"));
       return;
     }
 
     setIsLoading(true);
     setError(null);
     setResult(null);
+    setStatus(null);
+    disconnectActiveSession();
 
     try {
-      // Create session
       const newSession = await sdkRef.current.createSession({
         originUrl: window.location.href,
-        requestedFields: options.requestedFields,
-        datasourceId: options.datasourceId
       });
 
       setSession(newSession);
       setStatus(newSession.status);
+      activeSessionIdRef.current = newSession.sessionId;
 
-      // Store session in backend for tracking
       try {
-        await fetch('/api/backend/sessions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: newSession.sessionId,
-            sessionToken: newSession.sessionToken,
-            createdAt: new Date().toISOString()
-          })
+        await apiClient.createSession({
+          sessionId: newSession.sessionId,
+          sessionToken: newSession.sessionToken,
+          createdAt: new Date().toISOString(),
         });
       } catch (err) {
-        console.warn('Failed to store session in backend:', err);
+        console.warn("Failed to store session in backend:", err);
       }
 
-      // Connect to WebSocket for real-time updates
-      const connection = sdkRef.current.connect(
-        newSession.sessionId,
-        newSession.sessionToken,
-        {
-          onStatusChange: (newStatus, data) => {
-            setStatus(newStatus);
-            
-            if (data) {
-              setResult(data);
-            }
-
-            // Handle completion
-            if (newStatus === 'processing_completed' && data) {
-              setResult(data);
-              options.onComplete?.(data);
-              connectionRef.current?.disconnect();
-            }
-
-            // Handle failure or expiration
-            if (newStatus === 'processing_failed' || newStatus === 'session_expired') {
-              if (data) {
-                setResult(data);
-              }
-              connectionRef.current?.disconnect();
-            }
-          },
-          onError: (err) => {
-            setError(err);
-            options.onError?.(err);
-          }
-        }
-      );
-
-      connectionRef.current = connection;
-
+      connectToSession(newSession.sessionId, newSession.sessionToken);
     } catch (err) {
-      const dsError = err instanceof DataSharingError 
-        ? err 
-        : new DataSharingError('UNKNOWN', err instanceof Error ? err.message : 'Unknown error');
-      
+      const dsError = normalizeDataSharingError(err);
+
       setError(dsError);
-      options.onError?.(dsError);
+      onErrorRef.current?.(dsError);
     } finally {
       setIsLoading(false);
     }
-  }, [options.requestedFields, options.datasourceId]);
+  }, [
+    apiClient,
+    activeSessionIdRef,
+    connectToSession,
+    disconnectActiveSession,
+    sdkRef,
+  ]);
+
+  const launchExtension = useCallback(async () => {
+    if (!sdkRef.current || !session) {
+      setError(
+        new DataSharingError("INVALID_CONFIG", "Session not initialized"),
+      );
+      return;
+    }
+
+    setError(null);
+    startBackendPolling(session.sessionId);
+
+    try {
+      await sdkRef.current.launchExtension({
+        name: "Data Sharing Demo",
+        app_url: window.location.origin,
+        logo_url: `${window.location.origin}/logo.svg`,
+        websocket: {
+          session_id: session.sessionId,
+          session_token: session.sessionToken,
+        },
+        data_sharing: {
+          requested_fields: options.requestedFields,
+          datasource_id: options.datasourceId,
+        },
+        krn_config: {
+          keyring_api_url: process.env.NEXT_PUBLIC_BACKEND_URL || "",
+        },
+      });
+    } catch (err) {
+      const dsError = normalizeDataSharingError(err);
+      setError(dsError);
+      onErrorRef.current?.(dsError);
+    }
+  }, [
+    options.datasourceId,
+    options.requestedFields,
+    sdkRef,
+    session,
+    startBackendPolling,
+  ]);
 
   const reset = useCallback(() => {
-    connectionRef.current?.disconnect();
-    connectionRef.current = null;
-    
-    setSession(null);
-    setStatus(null);
-    setResult(null);
-    setError(null);
-    setIsLoading(false);
-  }, []);
+    void cleanupSession();
+    setFlowType(null);
+  }, [cleanupSession]);
 
   return {
     session,
@@ -157,6 +208,10 @@ export function useDataSharing(options: UseDataSharingOptions): UseDataSharingRe
     error,
     isLoading,
     startVerification,
-    reset
+    flowType,
+    setFlowType,
+    launchExtension,
+    cleanupSession,
+    reset,
   };
 }

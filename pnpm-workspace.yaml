@@ -1,3 +1,6 @@
 packages:
   - packages/*
-  - examples/**/*
+  - examples/data-sharing-demo/apps/*
+
+overrides:
+  '@keyringnetwork/data-sharing-sdk': link:../../Library/pnpm/global/5/node_modules/@keyringnetwork/data-sharing-sdk
