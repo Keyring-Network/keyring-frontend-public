@@ -13,6 +13,7 @@
     "pnpm": ">=8.0.0"
   },
   "dependencies": {
-    "@keyringnetwork/data-sharing-sdk": "link:../../Library/pnpm/global/5/node_modules/@keyringnetwork/data-sharing-sdk"
+    "@keyringnetwork/data-sharing-sdk": "link:../../Library/pnpm/global/5/node_modules/@keyringnetwork/data-sharing-sdk",
+    "@keyringnetwork/keyring-connect-sdk": "link:../../Library/pnpm/global/5/node_modules/@keyringnetwork/keyring-connect-sdk"
   }
 }

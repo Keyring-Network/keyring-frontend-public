@@ -49,6 +49,7 @@ export function KeyringConnectModule({
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
   const [verificationSession, setVerificationSession] =
     useState<VerificationSession | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
   const { environment } = useEnvironmentStore();
   const { policy } = usePolicyStore();
@@ -73,7 +74,7 @@ export function KeyringConnectModule({
       // This is needed because we switch between dev and prod environments
       return baseValidation && credentialData.key === policy.public_key?.n;
     },
-    [address, policyId, chainId, policy]
+    [address, policyId, chainId, policy],
   );
 
   // LAUNCH THE EXTENSION
@@ -92,8 +93,8 @@ export function KeyringConnectModule({
       if (!supportedChainIds?.includes(chainId)) {
         window.alert(
           `This policy is not supported for this chain. Please select a different policy. Supported chains: ${supportedChainIds?.join(
-            ", "
-          )}. Current chain: ${chainId}`
+            ", ",
+          )}. Current chain: ${chainId}`,
         );
         return;
       }
@@ -114,9 +115,9 @@ export function KeyringConnectModule({
         krn_config:
           environment === "dev"
             ? {
-              keyring_api_url: KEYRING_API_BASE_URL_DEV,
-              keyring_user_app_url: KEYRING_USER_APP_URL_DEV,
-            }
+                keyring_api_url: KEYRING_API_BASE_URL_DEV,
+                keyring_user_app_url: KEYRING_USER_APP_URL_DEV,
+              }
             : undefined,
       };
 
@@ -125,6 +126,26 @@ export function KeyringConnectModule({
       setCalldata(null);
 
       const session = await VerificationSession.launch(exampleConfig);
+      session.addEventListener("extensionConnected", () => {
+        setStatus("extensionConnected");
+      });
+      session.addEventListener("processingStarted", () => {
+        setStatus("processingStarted");
+      });
+      session.addEventListener("processingCompleted", (data) => {
+        setStatus("processingCompleted");
+        console.log(
+          "extension sent processingCompleted",
+          data.result.credential_data,
+        );
+        setCalldata(data.result.credential_data);
+      });
+      session.addEventListener("processingFailed", (data) => {
+        setStatus("processingFailed");
+        setFlowState("error");
+        console.error("extension sent error", data.error);
+      });
+
       setVerificationSession(session);
       const credentialData = await session.start();
 
@@ -147,7 +168,6 @@ export function KeyringConnectModule({
       setFlowState("no-credential");
     }
   };
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -251,6 +271,8 @@ export function KeyringConnectModule({
             <div className="flex-1">{renderKeyringConnectModule()}</div>
           </div>
 
+          <div className="bg-gray-100 h-px w-full mt-2" />
+          <p className="text-xs text-gray-500">Status: {status}</p>
           <div className="bg-gray-100 h-px w-full mt-2" />
           <div className="w-full flex justify-center items-center gap-2">
             <p className="text-xs">Provided by </p>
