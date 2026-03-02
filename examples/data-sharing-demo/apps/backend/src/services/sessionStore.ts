@@ -6,7 +6,6 @@
 export interface StoredSession {
   sessionId: string;
   sessionToken?: string;
-  status: string;
   verifiedData?: Record<string, unknown>;
   proofMetadata?: {
     datasourceId: string;
@@ -35,10 +34,12 @@ class SessionStore {
 
     this.sessions.set(sessionId, {
       ...data,
-      sessionId
+      sessionId,
     });
 
-    console.log(`💾 Session stored: ${sessionId} (${this.sessions.size} total)`);
+    console.log(
+      `💾 Session stored: ${sessionId} (${this.sessions.size} total)`,
+    );
   }
 
   /**
@@ -75,9 +76,9 @@ class SessionStore {
 
     for (const [sessionId, session] of this.sessions.entries()) {
       const sessionTime = new Date(
-        session.receivedAt || session.createdAt || 0
+        session.receivedAt || session.createdAt || 0,
       ).getTime();
-      
+
       if (now - sessionTime > this.SESSION_TTL_MS) {
         this.sessions.delete(sessionId);
         cleaned++;
@@ -110,7 +111,7 @@ class SessionStore {
    */
   clearAll(): void {
     this.sessions.clear();
-    console.log('🧹 All sessions cleared');
+    console.log("🧹 All sessions cleared");
   }
 }
 

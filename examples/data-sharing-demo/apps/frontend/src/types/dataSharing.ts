@@ -7,7 +7,6 @@ import {
 
 export interface BackendSessionResult {
   sessionId: string;
-  status: SessionStatus;
   error?: string;
   proofMetadata?: ProofMetadata;
   verifiedData?: Record<string, unknown>;
