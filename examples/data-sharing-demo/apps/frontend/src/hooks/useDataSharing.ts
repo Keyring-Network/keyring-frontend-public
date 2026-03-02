@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import {
+  DataSharingSDK,
   Session,
   SessionStatus,
   DataSharingError,
@@ -13,20 +14,21 @@ import {
   UseDataSharingReturn,
 } from "@/types";
 import { Api } from "@/helpers/api";
-import { useBackendPolling } from "@/hooks/dataSharing/useBackendPolling";
-import { useSessionLifecycle } from "@/hooks/dataSharing/useSessionLifecycle";
-import { useSdkSession } from "@/hooks/dataSharing/useSdkSession";
 import { normalizeDataSharingError } from "@/lib/dataSharing/normalizeError";
 
 /**
  * React hook for Keyring Data Sharing SDK
- * Manages session lifecycle, WebSocket connection, and state
+ * Owns the full flow: SDK lifecycle, connection, polling, and cleanup.
  */
 export function useDataSharing(
   options: UseDataSharingOptions,
 ): UseDataSharingReturn {
   const apiClientRef = useRef<Api>(new Api());
   const apiClient = apiClientRef.current;
+  const sdkRef = useRef<DataSharingSDK | null>(null);
+  const activeSessionIdRef = useRef<string | null>(null);
+  const pollingIntervalRef = useRef<number | null>(null);
+  const pollingStartedAtRef = useRef<number | null>(null);
 
   const [session, setSession] = useState<Session | null>(null);
   const [status, setStatus] = useState<SessionStatus | null>(null);
@@ -37,43 +39,81 @@ export function useDataSharing(
   const onCompleteRef = useRef(options.onComplete);
   const onErrorRef = useRef(options.onError);
 
-  useEffect(() => {
-    onCompleteRef.current = options.onComplete;
-    onErrorRef.current = options.onError;
-  }, [options.onComplete, options.onError]);
-
-  const handleInvalidConfig = useCallback((configError: DataSharingError) => {
-    setError(configError);
+  const clearPolling = useCallback(() => {
+    if (pollingIntervalRef.current !== null) {
+      window.clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    pollingStartedAtRef.current = null;
   }, []);
 
-  const { sdkRef } = useSdkSession({
-    requestedFields: options.requestedFields,
-    datasourceId: options.datasourceId,
-    onInvalidConfig: handleInvalidConfig,
-  });
+  const disconnectActiveSession = useCallback(() => {
+    sdkRef.current?.disconnectAll();
+  }, []);
 
-  const { startBackendPolling } = useBackendPolling({
-    apiClient,
-    onStatusChange: setStatus,
-    onResult: setResult,
-    onComplete: (data) => onCompleteRef.current?.(data),
-    onTimeout: setError,
-  });
+  const deleteSessionReference = useCallback(
+    async (sessionId: string) => {
+      try {
+        await apiClient.deleteSession(sessionId);
+      } catch (err) {
+        console.warn("Failed to delete backend session reference:", err);
+      }
+    },
+    [apiClient],
+  );
 
-  const {
-    activeSessionIdRef,
-    connectionRef,
-    cleanupSession,
-    disconnectActiveSession,
-  } = useSessionLifecycle({
-    apiClient,
-    sdkRef,
-    setSession,
-    setStatus,
-    setResult,
-    setError,
-    setIsLoading,
-  });
+  const cleanupSession = useCallback(async () => {
+    const currentSessionId = activeSessionIdRef.current;
+    clearPolling();
+    disconnectActiveSession();
+
+    if (currentSessionId) {
+      await deleteSessionReference(currentSessionId);
+    }
+
+    activeSessionIdRef.current = null;
+    setSession(null);
+    setStatus(null);
+    setResult(null);
+    setError(null);
+    setIsLoading(false);
+  }, [clearPolling, deleteSessionReference, disconnectActiveSession]);
+
+  const startBackendPolling = useCallback(
+    (sessionId: string, completedTimeoutMs = 60000) => {
+      clearPolling();
+      pollingStartedAtRef.current = Date.now();
+
+      pollingIntervalRef.current = window.setInterval(async () => {
+        const startedAt = pollingStartedAtRef.current ?? Date.now();
+        const timeElapsed = Date.now() - startedAt;
+
+        if (timeElapsed > completedTimeoutMs) {
+          clearPolling();
+          setError(
+            new DataSharingError(
+              "TIMEOUT",
+              "Verification completed but data not received within 60 seconds. Please try again.",
+            ),
+          );
+          return;
+        }
+
+        try {
+          const data = await apiClient.getSession(sessionId);
+
+          if (data.verifiedData) {
+            clearPolling();
+            setResult(data);
+            onCompleteRef.current?.(data);
+          }
+        } catch {
+          // Ignore transient polling glitches and keep trying until timeout.
+        }
+      }, 2000);
+    },
+    [apiClient, clearPolling],
+  );
 
   const connectToSession = useCallback(
     (sessionId: string, sessionToken: string) => {
@@ -81,11 +121,12 @@ export function useDataSharing(
         return;
       }
 
-      const connection = sdkRef.current.connect(sessionId, sessionToken, {
+      sdkRef.current.connect(sessionId, sessionToken, {
         onStatusChange: (newStatus, data) => {
           setStatus(newStatus);
 
           if (newStatus === "processing_completed" && data) {
+            startBackendPolling(sessionId);
             disconnectActiveSession();
           }
 
@@ -94,6 +135,7 @@ export function useDataSharing(
             newStatus === "session_expired"
           ) {
             disconnectActiveSession();
+            clearPolling();
           }
         },
         onError: (err) => {
@@ -101,10 +143,8 @@ export function useDataSharing(
           onErrorRef.current?.(err);
         },
       });
-
-      connectionRef.current = connection;
     },
-    [connectionRef, disconnectActiveSession, sdkRef],
+    [clearPolling, disconnectActiveSession, startBackendPolling],
   );
 
   const startVerification = useCallback(async () => {
@@ -114,10 +154,18 @@ export function useDataSharing(
     }
 
     setIsLoading(true);
+    setSession(null);
     setError(null);
     setResult(null);
     setStatus(null);
+    clearPolling();
     disconnectActiveSession();
+
+    const previousSessionId = activeSessionIdRef.current;
+    if (previousSessionId) {
+      await deleteSessionReference(previousSessionId);
+      activeSessionIdRef.current = null;
+    }
 
     try {
       const newSession = await sdkRef.current.createSession({
@@ -149,10 +197,10 @@ export function useDataSharing(
     }
   }, [
     apiClient,
-    activeSessionIdRef,
+    clearPolling,
     connectToSession,
+    deleteSessionReference,
     disconnectActiveSession,
-    sdkRef,
   ]);
 
   const launchExtension = useCallback(async () => {
@@ -164,7 +212,6 @@ export function useDataSharing(
     }
 
     setError(null);
-    startBackendPolling(session.sessionId);
 
     try {
       await sdkRef.current.launchExtension({
@@ -188,18 +235,60 @@ export function useDataSharing(
       setError(dsError);
       onErrorRef.current?.(dsError);
     }
-  }, [
-    options.datasourceId,
-    options.requestedFields,
-    sdkRef,
-    session,
-    startBackendPolling,
-  ]);
+  }, [options.datasourceId, options.requestedFields, sdkRef, session]);
 
   const reset = useCallback(() => {
     void cleanupSession();
     setFlowType(null);
   }, [cleanupSession]);
+
+  useEffect(() => {
+    const apiKey = process.env.NEXT_PUBLIC_KEYRING_API_KEY;
+    if (!apiKey) {
+      setError(
+        new DataSharingError("INVALID_CONFIG", "API key not configured"),
+      );
+      sdkRef.current = null;
+      return;
+    }
+
+    disconnectActiveSession();
+    sdkRef.current = new DataSharingSDK({
+      apiKey,
+      baseUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "",
+      debug: process.env.NODE_ENV === "development",
+      requestedFields: options.requestedFields,
+      datasourceId: options.datasourceId,
+    });
+  }, [
+    disconnectActiveSession,
+    options.datasourceId,
+    options.requestedFields,
+    setError,
+  ]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const sessionId = activeSessionIdRef.current;
+      clearPolling();
+      disconnectActiveSession();
+      if (sessionId) {
+        void apiClient.deleteSession(sessionId);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      handleBeforeUnload();
+    };
+  }, [apiClient, clearPolling, disconnectActiveSession]);
+
+  useEffect(() => {
+    onCompleteRef.current = options.onComplete;
+    onErrorRef.current = options.onError;
+  }, [options.onComplete, options.onError]);
 
   return {
     session,

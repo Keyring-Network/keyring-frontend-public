@@ -59,23 +59,16 @@ export default function ExtensionFlow({
           is installed and allow popups for this site.
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Button variant="ghost" onClick={onBack}>
-            Back
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <Button variant="outline" onClick={() => void onLaunch()}>
+            Launch extension
           </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => void onLaunch()}>
-              Launch extension
-            </Button>
-            <Button variant="outline" onClick={onRetry}>
-              Retry
-            </Button>
-          </div>
+          <Button variant="outline" onClick={onRetry}>
+            Retry
+          </Button>
         </div>
 
-        <p className="text-xs text-slate-500">
-          Session: {session.sessionId.slice(0, 10)}...
-        </p>
+        <p className="text-xs text-slate-500">Session: {session.sessionId}</p>
       </CardContent>
     </Card>
   );
