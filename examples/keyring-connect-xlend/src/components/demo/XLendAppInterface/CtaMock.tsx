@@ -1,6 +1,6 @@
 "use client";
 
-import { FlowState } from "@/app/page";
+import { FlowState } from "@/components/demo/types";
 import { Button } from "@/components/ui/button";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 

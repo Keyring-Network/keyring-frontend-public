@@ -1,4 +1,4 @@
-import { FlowState } from "@/app/page";
+import { FlowState } from "@/components/demo/types";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,

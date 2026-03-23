@@ -2,12 +2,22 @@
 
 This demo showcases the integration of [Keyring Connect SDK](https://www.npmjs.com/package/@keyringnetwork/keyring-connect-sdk) with a fictional lending platform called xLend. The application demonstrates how to implement Keyring Connect verification flow in a DeFi lending application.
 
+This demo now includes two Keyring Connect routes:
+
+- `/` uses the extension-only `chromeApi` flow. It talks directly to the Keyring extension, polls extension state through Chrome messaging, and does not create backend sessions or use client tokens.
+- `/session-api` uses the session-based `sessionApi` flow. It mints a short-lived client token through a local Next API route, launches the SDK session flow, and supports the full extension-or-mobile verification journey before continuing into the xLend credential update flow.
+
+The session-based route requires server-only API keys:
+
+- `KEYRING_API_KEY_DEV`
+- `KEYRING_API_KEY_PROD`
+
 ## Overview
 
 The demo simulates a complete Keyring Connect verification flow with four stages:
 
 1. **Install Extension**: Prompts users to install the Keyring Connect browser extension
-2. **Start Verification**: Initiates the Keyring Connect verification process
+2. **Start Verification**: Initiates the direct extension-based Keyring Connect verification process
 3. **In Progress**: Shows verification status and allows checking progress
 4. **Completed**: Displays successful verification and unlocks lending features
 
@@ -70,7 +80,7 @@ The Keyring Connect flow integrates identity verification into DeFi applications
 6. Start Verification
 
 - User clicks "Start Verification"
-- App launches the extension for user authentication
+- App launches the extension for user authentication using `dataTransport: "chromeApi"`
 - Initially, KeyringConnect.getExtensionState() returns undefined user state (user needs to log in)
 
 7. Verification / ZKP Generation In Progress

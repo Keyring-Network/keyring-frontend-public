@@ -10,7 +10,6 @@ import {
   SessionConfig,
 } from "@keyringnetwork/keyring-connect-sdk";
 import { Icon } from "./Icon";
-import { FlowState } from "@/app/page";
 import { KeyringLogo } from "@/components/ui/keyring-logo";
 import { CredentialUpdate } from "./CredentialUpdate";
 import { CaipNetworkId } from "@reown/appkit";
@@ -20,9 +19,9 @@ import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
 import {
   KEYRING_API_BASE_URL_DEV,
-  KEYRING_API_KEY,
   KEYRING_USER_APP_URL_DEV,
 } from "@/config";
+import { DemoTransportMode, FlowState } from "@/components/demo/types";
 interface KeyringConnectModuleProps {
   policyId: number;
   address?: string;
@@ -30,6 +29,7 @@ interface KeyringConnectModuleProps {
   flowState: FlowState | null;
   credentialExpired: boolean;
   setFlowState: (flowState: FlowState) => void;
+  transportMode: DemoTransportMode;
 }
 
 /**
@@ -44,12 +44,12 @@ export function KeyringConnectModule({
   flowState,
   credentialExpired,
   setFlowState,
+  transportMode,
 }: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
   const [verificationSession, setVerificationSession] =
     useState<VerificationSession | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
 
   const { environment } = useEnvironmentStore();
   const { policy } = usePolicyStore();
@@ -77,6 +77,28 @@ export function KeyringConnectModule({
     [address, policyId, chainId, policy],
   );
 
+  const getClientToken = useCallback(async (): Promise<string> => {
+    const response = await fetch("/api/connect/client-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        environment,
+      }),
+    });
+
+    const data = (await response.json().catch(() => null)) as
+      | { token?: string; error?: string }
+      | null;
+
+    if (!response.ok || !data?.token) {
+      throw new Error(data?.error || "Failed to mint client token");
+    }
+
+    return data.token;
+  }, [environment]);
+
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
   // If the extension is not installed, the user will be redirected to the extension's install page.
@@ -101,16 +123,23 @@ export function KeyringConnectModule({
     }
 
     try {
+      setFlowState("progress");
+      setCalldata(null);
+
+      const clientToken =
+        transportMode === "sessionApi" ? await getClientToken() : undefined;
+
       const exampleConfig: SessionConfig = {
         app_url: window.location.origin,
         name: "xLend",
         logo_url: `${window.location.origin}/xlend-icon.svg`,
+        dataTransport: transportMode,
+        clientToken,
         policy_id: policyId,
         credential_config: {
           chain_id: chainId as KrnSupportedChainId,
           wallet_address: address,
         },
-        api_key: KEYRING_API_KEY,
         // NOTE: This `krn_config` is only required for development purposes and needs to be removed in production.
         krn_config:
           environment === "dev"
@@ -121,31 +150,7 @@ export function KeyringConnectModule({
             : undefined,
       };
 
-      // Update state to show progress
-      setFlowState("progress");
-      setCalldata(null);
-
       const session = await VerificationSession.launch(exampleConfig);
-      session.addEventListener("extensionConnected", () => {
-        setStatus("extensionConnected");
-      });
-      session.addEventListener("processingStarted", () => {
-        setStatus("processingStarted");
-      });
-      session.addEventListener("processingCompleted", (data) => {
-        setStatus("processingCompleted");
-        console.log(
-          "extension sent processingCompleted",
-          data.result.credential_data,
-        );
-        setCalldata(data.result.credential_data);
-      });
-      session.addEventListener("processingFailed", (data) => {
-        setStatus("processingFailed");
-        setFlowState("error");
-        console.error("extension sent error", data.error);
-      });
-
       setVerificationSession(session);
       const credentialData = await session.start();
 
@@ -211,8 +216,10 @@ export function KeyringConnectModule({
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               {credentialExpired
-                ? "Transaction will be prepared in the Keyring extension."
-                : "After the verification you can continue here."}
+                ? "Transaction will be prepared after verification completes."
+                : transportMode === "sessionApi"
+                ? "Choose extension or mobile in the Keyring UI, then return here to continue."
+                : "Complete the verification in the Keyring extension, then continue here."}
             </p>
             <div className="flex gap-2 justify-end mt-3">
               <Button variant="ghost" onClick={cancelVerification}>
@@ -271,8 +278,6 @@ export function KeyringConnectModule({
             <div className="flex-1">{renderKeyringConnectModule()}</div>
           </div>
 
-          <div className="bg-gray-100 h-px w-full mt-2" />
-          <p className="text-xs text-gray-500">Status: {status}</p>
           <div className="bg-gray-100 h-px w-full mt-2" />
           <div className="w-full flex justify-center items-center gap-2">
             <p className="text-xs">Provided by </p>
