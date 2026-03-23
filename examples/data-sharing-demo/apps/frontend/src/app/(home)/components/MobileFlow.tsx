@@ -41,7 +41,7 @@ export default function MobileFlow({
   onRetry,
 }: MobileFlowProps) {
   const statusText = useMemo(() => {
-    if (status === "client_connected")
+    if (status === "extension_connected" || status === "mobile_connected")
       return "Device connected. Continue in mobile app.";
     if (status === "processing_started")
       return "Verification submitted. Waiting for final proof.";

@@ -151,7 +151,6 @@ Users choose the flow in the UI during **Step 2: Choose Flow**.
 
 **Frontend (`apps/frontend/.env`)**:
 
-- `NEXT_PUBLIC_KEYRING_API_KEY` - Your partner API key
 - `NEXT_PUBLIC_KEYRING_ENV` - `production` | `sandbox` | `development`
 - `NEXT_PUBLIC_BACKEND_URL` - Keyring API base URL used by SDK
 - `NEXT_PUBLIC_APP_API_URL` - Local backend URL (default: `http://localhost:8000`)

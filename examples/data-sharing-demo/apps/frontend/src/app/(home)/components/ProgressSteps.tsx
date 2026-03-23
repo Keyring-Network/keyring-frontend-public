@@ -14,7 +14,8 @@ function getProgress(status: SessionStatus | null): { value: number; message: st
   switch (status) {
     case "session_created":
       return { value: 20, message: "Session ready. Waiting for user action." };
-    case "client_connected":
+    case "extension_connected":
+    case "mobile_connected":
       return { value: 45, message: "Client connected. Verification handshake running." };
     case "processing_started":
       return { value: 70, message: "Proof verification in progress." };

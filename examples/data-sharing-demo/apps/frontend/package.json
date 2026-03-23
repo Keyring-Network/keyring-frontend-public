@@ -10,7 +10,6 @@
     "clean": "rm -rf .next"
   },
   "dependencies": {
-    "@keyringnetwork/data-sharing-sdk": "workspace:*",
     "axios": "^1.12.2",
     "next": "14.1.0",
     "qrcode.react": "^3.1.0",

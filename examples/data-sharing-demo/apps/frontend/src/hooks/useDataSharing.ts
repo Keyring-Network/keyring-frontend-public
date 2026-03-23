@@ -14,7 +14,7 @@ import {
   UseDataSharingReturn,
 } from "@/types";
 import { Api } from "@/helpers/api";
-import { normalizeDataSharingError } from "@/lib/dataSharing/normalizeError";
+import { normalizeDataSharingError } from "@/lib/normalizeError";
 
 /**
  * React hook for Keyring Data Sharing SDK
@@ -148,6 +148,8 @@ export function useDataSharing(
   );
 
   const startVerification = useCallback(async () => {
+    await initializeSdk();
+
     if (!sdkRef.current) {
       setError(new DataSharingError("INVALID_CONFIG", "SDK not initialized"));
       return;
@@ -242,30 +244,34 @@ export function useDataSharing(
     setFlowType(null);
   }, [cleanupSession]);
 
-  useEffect(() => {
-    const apiKey = process.env.NEXT_PUBLIC_KEYRING_API_KEY;
-    if (!apiKey) {
-      setError(
-        new DataSharingError("INVALID_CONFIG", "API key not configured"),
-      );
-      sdkRef.current = null;
+  const initializeSdk = async () => {
+    if (sdkRef.current) {
       return;
     }
 
-    disconnectActiveSession();
-    sdkRef.current = new DataSharingSDK({
-      apiKey,
-      baseUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "",
-      debug: process.env.NODE_ENV === "development",
-      requestedFields: options.requestedFields,
-      datasourceId: options.datasourceId,
-    });
-  }, [
-    disconnectActiveSession,
-    options.datasourceId,
-    options.requestedFields,
-    setError,
-  ]);
+    try {
+      const { token } = await apiClient.getClientToken();
+
+      disconnectActiveSession();
+      sdkRef.current = new DataSharingSDK({
+        clientToken: token,
+        baseUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "",
+        debug: process.env.NODE_ENV === "development",
+        requestedFields: options.requestedFields,
+        datasourceId: options.datasourceId,
+      });
+    } catch (error) {
+      setError(
+        error instanceof DataSharingError
+          ? error
+          : new DataSharingError(
+              "INVALID_CONFIG",
+              "Client token not configured",
+            ),
+      );
+      sdkRef.current = null;
+    }
+  };
 
   useEffect(() => {
     const handleBeforeUnload = () => {

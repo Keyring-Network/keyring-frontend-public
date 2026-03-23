@@ -58,4 +58,17 @@ export class Api {
     const response = await this.axiosInstance.get<PartnerInfo>(`/api/partner`);
     return response.data;
   }
+
+  /**
+   * Mint a short-lived client token for browser session creation.
+   */
+  async getClientToken(): Promise<{ token: string; expiresAt: string }> {
+    const response = await this.axiosInstance.post<{ token: string; expires_at: string }>(
+      `/api/partner/client-token`,
+    );
+    return {
+      token: response.data.token,
+      expiresAt: response.data.expires_at,
+    };
+  }
 }
