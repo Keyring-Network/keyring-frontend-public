@@ -4,7 +4,6 @@
  */
 
 import { Router, Request, Response } from "express";
-import { sessionStore } from "../services/sessionStore";
 
 const router: Router = Router();
 
