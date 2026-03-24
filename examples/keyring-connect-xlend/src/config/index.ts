@@ -13,8 +13,6 @@ import {
 import type { AppKitNetwork } from "@reown/appkit/networks";
 import { Policy } from "@/types/keyring";
 
-export const KEYRING_API_KEY = process.env.NEXT_PUBLIC_KEYRING_API_KEY || "";
-
 // Get projectId from https://cloud.reown.com
 export const REOWN_PROJECT_ID =
   process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ||

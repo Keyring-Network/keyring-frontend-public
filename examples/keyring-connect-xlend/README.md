@@ -7,10 +7,9 @@ This demo now includes two Keyring Connect routes:
 - `/` uses the extension-only `chromeApi` flow. It talks directly to the Keyring extension, polls extension state through Chrome messaging, and does not create backend sessions or use client tokens.
 - `/session-api` uses the session-based `sessionApi` flow. It mints a short-lived client token through a local Next API route, launches the SDK session flow, and supports the full extension-or-mobile verification journey before continuing into the xLend credential update flow.
 
-The session-based route requires server-only API keys:
+The session-based route requires one server-only API key:
 
-- `KEYRING_API_KEY_DEV`
-- `KEYRING_API_KEY_PROD`
+- `KEYRING_API_KEY`
 
 ## Overview
 

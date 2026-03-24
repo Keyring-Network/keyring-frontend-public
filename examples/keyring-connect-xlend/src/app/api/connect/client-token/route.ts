@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_KEYRING_API_KEY;
+  const apiKey = process.env.KEYRING_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
       {
