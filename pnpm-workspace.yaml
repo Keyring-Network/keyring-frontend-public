@@ -1,3 +1,4 @@
 packages:
   - packages/*
   - examples/*
+  - examples/data-sharing-demo/apps/*
