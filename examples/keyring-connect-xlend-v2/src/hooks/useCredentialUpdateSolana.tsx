@@ -38,10 +38,10 @@ export const useCredentialUpdateSolana = ({
   const [preparedTransaction, setPreparedTransaction] =
     useState<Transaction | null>(null);
   const [pendingToastId, setPendingToastId] = useState<string | number | null>(
-    null
+    null,
   );
   const { refetch: refetchCredential } = useCheckCredential(
-    credentialData.policyId
+    credentialData.policyId,
   );
   const { environment } = useEnvironmentStore();
   const [retryCounter, setRetryCounter] = useState(0);
@@ -84,7 +84,7 @@ export const useCredentialUpdateSolana = ({
         action: transactionSignature
           ? createBlockExplorerAction(
               transactionSignature,
-              credentialData.chainId
+              credentialData.chainId,
             )
           : undefined,
       });
@@ -151,12 +151,12 @@ export const useCredentialUpdateSolana = ({
         const entityMapping = getEntityMapping(
           credentialData.policyId,
           trader,
-          program
+          program,
         );
         const keyMapping = await getKeyMapping(
           credentialData.key,
           program,
-          connection
+          connection,
         );
 
         // Create payload for credential update
@@ -164,7 +164,7 @@ export const useCredentialUpdateSolana = ({
           credentialData,
           trader,
           connection,
-          environment
+          environment,
         );
 
         const transaction = await program.methods
@@ -181,9 +181,8 @@ export const useCredentialUpdateSolana = ({
         transaction.feePayer = trader;
 
         // Get latest blockhash
-        const latestBlockhash = await connection.getLatestBlockhash(
-          "finalized"
-        );
+        const latestBlockhash =
+          await connection.getLatestBlockhash("finalized");
         transaction.recentBlockhash = latestBlockhash.blockhash;
 
         // Simulate the transaction
@@ -195,11 +194,11 @@ export const useCredentialUpdateSolana = ({
           if (
             errorString.includes("AccountNotFound") ||
             simulation.value.logs?.some(
-              (log: string) => log.includes("insufficient lamports") // TODO: we could add the actual amount of lamports needed
+              (log: string) => log.includes("insufficient lamports"), // TODO: we could add the actual amount of lamports needed
             )
           ) {
             setSimulationError(
-              `Insufficient funds: Your Solana wallet needs SOL to perform this transaction`
+              `Insufficient funds: Your Solana wallet needs SOL to perform this transaction`,
             );
           } else {
             setSimulationError(`Simulation failed: ${errorString}`);
@@ -216,7 +215,7 @@ export const useCredentialUpdateSolana = ({
         setSimulationError(
           `Preparation failed: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`
+          }`,
         );
         setPreparedTransaction(null);
         setIsSimulating(false);
@@ -224,7 +223,7 @@ export const useCredentialUpdateSolana = ({
     };
 
     prepareTransaction();
-  }, [credentialData, walletProvider, retryCounter, connection]);
+  }, [credentialData, walletProvider, retryCounter, connection, environment]);
 
   // Check if we can enable the write function
   useEffect(() => {
@@ -244,7 +243,7 @@ export const useCredentialUpdateSolana = ({
       // Use the prepared transaction
       const signature = await walletProvider.sendTransaction(
         preparedTransaction,
-        connection
+        connection,
       );
       setTransactionSignature(signature);
       onTransactionPending();

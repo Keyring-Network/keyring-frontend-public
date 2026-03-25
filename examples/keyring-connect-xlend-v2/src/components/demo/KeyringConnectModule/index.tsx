@@ -3,23 +3,25 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  KeyringConnect,
-  ExtensionSDKConfig,
   CredentialData,
-} from "@keyringnetwork/keyring-connect-sdk";
-import { Icon } from "./Icon";
-import { FlowState } from "@/app/page";
-import { KeyringLogo } from "@/components/ui/keyring-logo";
-import { CredentialUpdate } from "./CredentialUpdate";
-import {
+  VerificationSession,
   KrnSupportedChainId,
   SupportedChainIds,
+  SessionConfig,
 } from "@keyringnetwork/keyring-connect-sdk";
+import { Icon } from "./Icon";
+import { KeyringLogo } from "@/components/ui/keyring-logo";
+import { CredentialUpdate } from "./CredentialUpdate";
 import { CaipNetworkId } from "@reown/appkit";
 import { getChainIdFromCaipNetworkId } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
+import {
+  KEYRING_API_BASE_URL_DEV,
+  KEYRING_USER_APP_URL_DEV,
+} from "@/config";
+import { DemoTransportMode, FlowState } from "@/components/demo/types";
 interface KeyringConnectModuleProps {
   policyId: number;
   address?: string;
@@ -27,6 +29,7 @@ interface KeyringConnectModuleProps {
   flowState: FlowState | null;
   credentialExpired: boolean;
   setFlowState: (flowState: FlowState) => void;
+  transportMode: DemoTransportMode;
 }
 
 /**
@@ -41,9 +44,12 @@ export function KeyringConnectModule({
   flowState,
   credentialExpired,
   setFlowState,
+  transportMode,
 }: KeyringConnectModuleProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
+  const [verificationSession, setVerificationSession] =
+    useState<VerificationSession | null>(null);
 
   const { environment } = useEnvironmentStore();
   const { policy } = usePolicyStore();
@@ -68,32 +74,30 @@ export function KeyringConnectModule({
       // This is needed because we switch between dev and prod environments
       return baseValidation && credentialData.key === policy.public_key?.n;
     },
-    [address, policyId, chainId, policy]
+    [address, policyId, chainId, policy],
   );
 
-  // Subscribe to the extension state changes
-  useEffect(() => {
-    const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
-      if (!state) {
-        setFlowState("install");
-        return;
-      }
-
-      const { credentialData } = state;
-
-      if (credentialData && validCredentialData(credentialData)) {
-        setFlowState("calldata-ready");
-        setCalldata(credentialData);
-      } else if (flowState !== "progress") {
-        setCalldata(null);
-        setFlowState("start");
-      }
+  const getClientToken = useCallback(async (): Promise<string> => {
+    const response = await fetch("/api/connect/client-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        environment,
+      }),
     });
 
-    return unsubscribe; // Cleanup on unmount
+    const data = (await response.json().catch(() => null)) as
+      | { token?: string; error?: string }
+      | null;
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validCredentialData, flowState, environment]);
+    if (!response.ok || !data?.token) {
+      throw new Error(data?.error || "Failed to mint client token");
+    }
+
+    return data.token;
+  }, [environment]);
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
@@ -111,18 +115,26 @@ export function KeyringConnectModule({
       if (!supportedChainIds?.includes(chainId)) {
         window.alert(
           `This policy is not supported for this chain. Please select a different policy. Supported chains: ${supportedChainIds?.join(
-            ", "
-          )}. Current chain: ${chainId}`
+            ", ",
+          )}. Current chain: ${chainId}`,
         );
         return;
       }
     }
 
     try {
-      const exampleConfig: ExtensionSDKConfig = {
+      setFlowState("progress");
+      setCalldata(null);
+
+      const clientToken =
+        transportMode === "sessionApi" ? await getClientToken() : undefined;
+
+      const exampleConfig: SessionConfig = {
         app_url: window.location.origin,
         name: "xLend",
         logo_url: `${window.location.origin}/xlend-icon.svg`,
+        dataTransport: transportMode,
+        clientToken,
         policy_id: policyId,
         credential_config: {
           chain_id: chainId as KrnSupportedChainId,
@@ -132,22 +144,35 @@ export function KeyringConnectModule({
         krn_config:
           environment === "dev"
             ? {
-                keyring_api_url: "https://main.api.keyring-backend.krndev.net",
-                keyring_user_app_url: "https://app.keyringdev.network",
+                keyring_api_url: KEYRING_API_BASE_URL_DEV,
+                keyring_user_app_url: KEYRING_USER_APP_URL_DEV,
               }
             : undefined,
       };
 
-      // Update state to show progress
-      setFlowState("progress");
-      setCalldata(null);
+      const session = await VerificationSession.launch(exampleConfig);
+      setVerificationSession(session);
+      const credentialData = await session.start();
 
-      await KeyringConnect.launchExtension(exampleConfig);
+      if (credentialData && validCredentialData(credentialData)) {
+        setFlowState("calldata-ready");
+        setCalldata(credentialData);
+      } else {
+        setFlowState("no-credential");
+      }
     } catch (error) {
       console.error("Failed to launch extension:", error);
+      setFlowState("no-credential");
     }
   };
 
+  const cancelVerification = async () => {
+    if (verificationSession) {
+      await verificationSession.close();
+      setVerificationSession(null);
+      setFlowState("no-credential");
+    }
+  };
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -163,19 +188,7 @@ export function KeyringConnectModule({
 
   const renderKeyringConnectModule = () => {
     switch (flowState) {
-      case "install":
-        return (
-          <>
-            <h3 className="font-medium text-gray-900">Verification Required</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Install the Keyring extension to complete identity verification.
-            </p>
-            <Button className="mt-3" onClick={() => launchExtension()}>
-              Install Extension
-            </Button>
-          </>
-        );
-      case "start":
+      case "no-credential":
         return (
           <>
             <h3 className="font-medium text-gray-900">
@@ -203,16 +216,13 @@ export function KeyringConnectModule({
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               {credentialExpired
-                ? "Transaction will be prepared in the Keyring extension."
-                : "After the verification you can continue here."}
+                ? "Transaction will be prepared after verification completes."
+                : transportMode === "sessionApi"
+                ? "Choose extension or mobile in the Keyring UI, then return here to continue."
+                : "Complete the verification in the Keyring extension, then continue here."}
             </p>
             <div className="flex gap-2 justify-end mt-3">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setFlowState("start");
-                }}
-              >
+              <Button variant="ghost" onClick={cancelVerification}>
                 Cancel
               </Button>
             </div>
@@ -238,15 +248,13 @@ export function KeyringConnectModule({
             </>
           )
         );
-      case "no-credential":
       case "loading":
       default:
         return null;
     }
   };
 
-  const shouldShowSkeleton =
-    flowState === "no-credential" || flowState === "loading" || !flowState;
+  const shouldShowSkeleton = flowState === "loading" || !flowState;
 
   return (
     <div className="flex flex-col gap-4 p-6 border rounded-lg animate-slideDown bg-white border-gray-200">
