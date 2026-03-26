@@ -21,6 +21,7 @@ const config = {
           "border-valid": "#bbf7d0",
           "text-valid": "#166534",
           "border-expired": "#374151",
+          "text-badge": "#1f2937",
         },
       },
       fontFamily: {

@@ -13,7 +13,7 @@ const badgeConfig = {
   "keyring:none": {
     bg: "bg-white",
     border: "border-keyring-border",
-    text: "text-keyring-heading",
+    text: "text-keyring-text-badge",
     label: "Verification Required",
     showIcon: true,
   },
@@ -27,7 +27,7 @@ const badgeConfig = {
   "keyring:expired": {
     bg: "bg-keyring-bg-badge-expired",
     border: "border-keyring-border-expired",
-    text: "text-keyring-heading",
+    text: "text-keyring-text-badge",
     label: "Access Expired",
     showIcon: true,
   },
@@ -50,23 +50,23 @@ export function KeyringVerificationBadge({
     <div className="group relative inline-flex">
       <div
         className={cn(
-          "inline-flex items-center gap-2 rounded-full border px-4 py-1.5",
+          "inline-flex items-center gap-1.5 rounded-full border px-3 py-1",
           config.bg,
           config.border
         )}
       >
         {stateKey === "loading" ? (
-          <Loader className="h-3 w-3 animate-spin text-keyring-dark-alt" />
+          <Loader className="h-2 w-2 animate-spin text-keyring-dark-alt" />
         ) : config.showIcon ? (
           <Image
             src="/images/keyring/keyring-icon.jpg"
             alt="Keyring"
-            width={20}
-            height={20}
-            className="rounded-[10px]"
+            width={14}
+            height={14}
+            className="rounded-[7px]"
           />
         ) : null}
-        <span className={cn("text-sm font-medium", config.text)}>
+        <span className={cn("text-[10px] font-medium", config.text)}>
           {config.label}
         </span>
       </div>

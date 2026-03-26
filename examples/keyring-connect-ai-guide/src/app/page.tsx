@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { KeyringVerificationBadge } from "@/components/KeyringVerificationBadge";
 import { KeyringConnectModuleA } from "@/components/KeyringConnectModuleA";
 import { KeyringConnectModuleB } from "@/components/KeyringConnectModuleB";
@@ -178,6 +179,25 @@ export default function KeyringShowcase() {
               onClick={noop}
             />
           </div>
+        </section>
+
+        {/* Link to Variant C */}
+        <section className="mb-12">
+          <Link
+            href="/variant-c"
+            className="flex items-center justify-between rounded-lg border border-keyring-border bg-white px-6 py-5 transition-colors hover:bg-keyring-bg-light"
+          >
+            <div>
+              <h2 className="text-lg font-bold text-keyring-heading">
+                Variant C: Custom Integration Example
+              </h2>
+              <p className="mt-1 text-sm text-keyring-muted">
+                A deposit card that embeds the verification flow in-context,
+                transforming in place as the user progresses.
+              </p>
+            </div>
+            <span className="text-keyring-muted">&rarr;</span>
+          </Link>
         </section>
       </div>
     </main>
