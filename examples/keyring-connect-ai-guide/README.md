@@ -8,6 +8,7 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to see all UI components in every state.
+Visit [http://localhost:3000/variant-c](http://localhost:3000/variant-c) for the custom integration example (in-context deposit card).
 
 ## Integrate with AI
 
@@ -29,7 +30,7 @@ Copy the prompt below into your AI coding assistant (Claude, Cursor, etc.). Fill
 | Policy ID | [YOUR_POLICY_ID] |
 | Chain ID | [YOUR_CHAIN_ID, e.g. 1 for Ethereum, 42161 for Arbitrum] |
 | Target chains | [EVM only / Solana only / both] |
-| UI pattern | [Variant A (Module Card -- Keyring-branded, appears/disappears) / Variant B (CTA Cycling -- your own card, button text changes)] |
+| UI pattern | [Variant A (Module Card -- Keyring-branded, appears/disappears) / Variant B (CTA Cycling -- your own card, button text changes) / Variant C (Custom -- in-context card that transforms during verification)] |
 | Main CTA | [Action name or component path, e.g. "Lend" or "src/components/LendingForm.tsx -- the \<SubmitButton\> to gate"] |
 | Tx strategy | [Two-step (simpler, two signatures) / Batched (recommended, one signature)] |
 

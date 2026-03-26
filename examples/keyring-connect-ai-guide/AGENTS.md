@@ -307,6 +307,7 @@ Copy from `src/components/` in this project:
 | `KeyringVerificationBadge` | `status: KeyringCredentialStatus \| "loading"` | none, valid, expired, loading |
 | `KeyringConnectModuleA` | `step, onAction, onCancel?, isSimulating?, featureName?` | install, start, progress, calldata-ready, refresh |
 | `KeyringConnectModuleB` | `step, onAction, onCancel?` | install, verify, check-status, add-credential |
+| `KeyringConnectModuleC` | `step, onAction, onCancel?` | supply, gate, install, verify, progress, verified, expired |
 | `KeyringGatedCTA` | `state, actionLabel?, onClick?` | not-connected, not-verified, verified |
 
 All are `"use client"`, named exports, Tailwind + lucide-react, zero SDK/wallet deps.
@@ -350,6 +351,19 @@ Your dApp Page
   |-- Your Main UI
   |-- Persistent Info Card ("Auth Required")
   |-- CTA cycles: "Install" → "Verify" → "Check Status" → "Add Credential"
+```
+
+**Variant C: Custom Integration Example**
+```
+Your dApp Page
+  |-- Deposit Card (transforms in-place per state)
+  |       |-- Header: "Deposit USDC" + APY badge (deposit views)
+  |       |-- Header: "Identity Verification" (verification views)
+  |       |-- KeyringVerificationBadge (supply/verified/expired)
+  |       |-- Stepper: ① Verify → ② Deposit USDC (gate/install/verify/progress)
+  |       |-- Deposit form (full or faded) / Helper text
+  |       |-- Verification notice (gate only)
+  |       |-- CTA: cycles per step
 ```
 
 ---
