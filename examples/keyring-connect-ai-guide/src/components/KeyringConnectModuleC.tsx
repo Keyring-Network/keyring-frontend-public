@@ -4,6 +4,24 @@ import { Loader, ShieldAlert } from "lucide-react";
 import { KeyringVerificationBadge } from "@/components/KeyringVerificationBadge";
 import { cn } from "@/lib/keyring-utils";
 
+/**
+ * Variant C: Custom Integration Example
+ *
+ * In-context deposit card that transforms in-place during the verification flow.
+ * Purely presentational — the parent controls which step to show.
+ *
+ * See AGENTS.md sections 12b and 13 (Variant C) for UI flows, step mapping,
+ * and integration rules.
+ *
+ * Steps:
+ * - "supply":  Step 0 — deposit form + status badge. CTA = "Supply USDC".
+ * - "gate":    Faded form + stepper + notice. CTA = "Start Verification".
+ * - "install": Verification flow. CTA = "Install Extension".
+ * - "verify":  Verification flow. CTA = "Verify with Keyring".
+ * - "progress": Verification flow. Disabled CTA + spinner.
+ * - "verified": Deposit form + green "Access Granted" badge.
+ * - "expired":  Like "supply" but with "Access Expired" badge.
+ */
 export type ModuleCStep =
   | "supply"
   | "gate"

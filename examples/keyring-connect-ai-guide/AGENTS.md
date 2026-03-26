@@ -40,14 +40,14 @@ type KeyringFlowState =
 
 // Returned by KeyringConnect.subscribeToExtensionState()
 interface CredentialData {
-  trader: string;       // Wallet address that was verified
-  policyId: number;     // Policy the credential is for
-  chainId: number;      // Chain the credential targets
-  validUntil: number;   // Expiry timestamp (seconds)
-  cost: bigint;         // Credential fee in wei -- send as tx value
-  key: string;          // Cryptographic key from verification
-  signature: string;    // Signed proof from extension
-  backdoor: string;     // Protocol field (pass as-is)
+  trader: `0x${string}`; // Wallet address that was verified
+  policyId: number;      // Policy the credential is for
+  chainId: number;       // Chain the credential targets
+  validUntil: number;    // Expiry timestamp (seconds)
+  cost: number;          // Credential fee in wei -- wrap with BigInt() for tx value
+  key: string;           // Cryptographic key from verification
+  signature: string;     // Signed proof from extension
+  backdoor: string;      // Protocol field (pass as-is)
 }
 // Maps to createCredential contract args:
 // [trader, policyId, chainId, validUntil, cost, key, signature, backdoor]
@@ -111,15 +111,15 @@ Use `entityExp(policyId, wallet)` on the Keyring contract:
 ```typescript
 import { getKrnDeploymentArtifact } from "@keyringnetwork/keyring-connect-sdk";
 
-const { address: contractAddress, abi } = getKrnDeploymentArtifact({
+const { address: contractAddress, ABI } = getKrnDeploymentArtifact({
   chainId,
   env: "prod",
 });
 
 // wagmi useReadContract
 const { data: entityExp } = useReadContract({
-  address: contractAddress,
-  abi,
+  address: contractAddress as `0x${string}`,
+  abi: ABI ?? [],
   functionName: "entityExp",
   args: [policyId, userAddress],
 });
@@ -133,37 +133,50 @@ const status = deriveKeyringCredentialStatus(entityExp ?? 0n);
 
 ## 5. Extension Subscription + Validation
 
+**The subscription should run continuously** (not only during active verification). The extension caches `credentialData` between page loads — a continuous subscription picks it up on re-mount, so the user resumes at `calldata-ready` after a page refresh instead of restarting the flow.
+
 ```typescript
 useEffect(() => {
+  if (!address) return;
+
   const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
     if (state === null) {
-      // Extension not installed
-      setFlowState("install");
+      // Extension not installed — track this, but don't change flowState here.
+      // Show "install" only when the user actively enters the verification flow
+      // (i.e., after clicking "Start Verification" and launchExtension() catches).
+      setExtensionInstalled(false);
       return;
     }
+
+    setExtensionInstalled(true);
 
     const { credentialData } = state;
+    if (!credentialData) return;
 
     // Validate returned data matches current context
-    if (credentialData.trader.toLowerCase() !== address?.toLowerCase()) {
-      console.error("credentialData.trader doesn't match connected wallet");
-      return;
-    }
-    if (credentialData.chainId !== activeChainId) {
-      console.error("credentialData.chainId doesn't match active chain");
-      return;
-    }
-    if (credentialData.policyId !== POLICY_ID) {
-      console.error("credentialData.policyId doesn't match expected policy");
-      return;
-    }
+    if (credentialData.trader.toLowerCase() !== address.toLowerCase()) return;
+    if (credentialData.chainId !== activeChainId) return;
+    if (credentialData.policyId !== POLICY_ID) return;
 
     setCredentialData(credentialData);
     setFlowState("calldata-ready");
   });
 
   return () => unsubscribe();
-}, [address, activeChainId]);
+}, [address]);
+```
+
+**Key behaviors:**
+- **Credential data takes priority:** If the extension returns valid `credentialData`, always transition to `calldata-ready` — even if the credential-status check is still loading.
+- **Don't auto-transition to `install`/`start`:** Setting `flowState("install")` inside the subscription during Step 0 will cause unwanted UI jumps. Track installation status separately; only surface it when the user clicks "Start Verification."
+- **Wallet change invalidation:** When `address` changes, clear `credentialData` and reset `flowState`. The subscription will re-evaluate with the new address, and mismatched `trader` values will be silently ignored.
+
+```typescript
+// Reset all state when wallet changes
+useEffect(() => {
+  setCredentialData(null);
+  setFlowState("loading");
+}, [address]);
 ```
 
 ---
@@ -181,6 +194,14 @@ const KEYRING_CONFIG = {
 
 ```typescript
 // Launch extension (call when user clicks "Start Verification")
+// IMPORTANT: Check for existing credentialData first — re-launching can clear the
+// extension's cached state. If credentialData exists, skip to "calldata-ready".
+if (credentialData) {
+  setFlowState("calldata-ready");
+  return;
+}
+
+setFlowState("progress");
 KeyringConnect.launchExtension({
   app_url: window.location.origin,
   name: KEYRING_CONFIG.appName,
@@ -190,6 +211,8 @@ KeyringConnect.launchExtension({
     chain_id: chainId,          // e.g., 1 for Ethereum, 42161 for Arbitrum
     wallet_address: userAddress, // connected wallet address
   },
+}).catch(() => {
+  setFlowState("install"); // Extension not found, redirect happened
 });
 // Handles both install (redirects to Chrome Web Store) and launch
 ```
@@ -202,8 +225,8 @@ KeyringConnect.launchExtension({
 const { writeContract } = useWriteContract();
 
 writeContract({
-  address: contractAddress,
-  abi,
+  address: contractAddress as `0x${string}`,
+  abi: ABI ?? [],
   functionName: "createCredential",
   args: [
     credentialData.trader,
@@ -215,11 +238,11 @@ writeContract({
     credentialData.signature,
     credentialData.backdoor,
   ],
-  value: credentialData.cost, // Credential fee in wei
+  value: BigInt(credentialData.cost), // cost is number, wrap with BigInt for tx value
 });
 ```
 
-`cost` is the credential fee denominated in wei (EVM) or lamports (Solana). It is set by the policy and included in the signed `credentialData`.
+`cost` is the credential fee denominated in wei (EVM) or lamports (Solana). The SDK returns `cost` as `number` — wrap with `BigInt()` when passing as tx `value`. It is set by the policy and included in the signed `credentialData`.
 
 ---
 
@@ -258,13 +281,13 @@ import { encodeFunctionData } from "viem";
 const txs = [];
 if (status.state !== "keyring:valid" && credentialData) {
   txs.push({
-    to: keyringContractAddress,
+    to: keyringContractAddress as `0x${string}`,
     data: encodeFunctionData({
-      abi: keyringAbi,
+      abi: ABI ?? [],
       functionName: "createCredential",
       args: [trader, policyId, chainId, validUntil, cost, key, signature, backdoor],
     }),
-    value: cost,
+    value: BigInt(cost),
   });
 }
 txs.push({
@@ -283,8 +306,8 @@ Re-check credential before submitting the gated action:
 ```typescript
 const handleSubmit = async () => {
   const exp = await readContract({
-    address: keyringContractAddress,
-    abi: keyringAbi,
+    address: keyringContractAddress as `0x${string}`,
+    abi: ABI ?? [],
     functionName: "entityExp",
     args: [policyId, wallet],
   });
@@ -318,17 +341,51 @@ All are `"use client"`, named exports, Tailwind + lucide-react, zero SDK/wallet 
 
 ```
 [wallet connects] --> "loading" --> "valid" (has credential)
-                                --> "no-credential" --> "install" (no extension)
-                                                    --> "start"   (has extension)
-                                --> "start" (expired credential -- renewal flow)
+                                --> "no-credential" (none or expired)
                                 --> "error"
 
-"install" --> [user installs] --> "start"
-"start"   --> [user clicks Start Verification] --> "progress"
-"progress" --> [extension returns credentialData] --> "calldata-ready"
-"calldata-ready" --> [user clicks Update Credential] --> "transaction-pending"
-"transaction-pending" --> [tx confirmed] --> "valid"
+[user action]     --> "progress" (launchExtension called)
+                  --> "install"  (launchExtension catch, extension not found)
+
+"progress"        --> [extension returns credentialData] --> "calldata-ready"
+"calldata-ready"  --> [user clicks Submit Credential]   --> "transaction-pending"
+"transaction-pending" --> [tx confirmed]                --> "valid"
 ```
+
+**State priority:** The credential-status effect (on-chain `entityExp`) and the extension subscription can both set `flowState`. When they conflict:
+- `"valid"` always wins -- if the on-chain credential is valid, override everything.
+- Active verification states (`progress`, `install`, `calldata-ready`, `transaction-pending`) must not be overridden by credential-status setting `"loading"` or `"no-credential"`.
+- `credentialData` from the extension subscription always transitions to `"calldata-ready"`, even if credential status is still `"loading"` (e.g., after page refresh).
+
+---
+
+## 12b. UI Flows (Variant C)
+
+Conditional paths -- each starts at Step 0 (deposit form visible):
+
+| Condition | Flow |
+|-----------|------|
+| No extension | 0 → gate → install → verify → progress → verified |
+| Extension installed | 0 → gate → progress → verified |
+| Already verified | Verified (persists across refreshes) |
+| Credential expired | 0 (expired badge) → gate → progress → verified |
+
+**Step 0 is always the entry point when credential is missing or expired.**
+The gate view only appears after the user clicks the main CTA ("Supply USDC").
+This is a local UI state, not an SDK state.
+
+**ModuleCStep → flowState mapping:**
+
+| UI Step | `flowState` values | Trigger | Deposit form |
+|---------|--------------------|---------|--------------|
+| Step 0 (`supply`) | `no-credential`, `loading` | Page load (wallet connected) | Visible |
+| Gate (`gate`) | (local `showGate = true`) | User clicks "Supply USDC" | Faded (0.3) |
+| Install (`install`) | `install` | `launchExtension()` catch | Hidden |
+| Verify (`verify`) | `start` | Extension detected | Hidden |
+| Progress (`progress`) | `progress` | `launchExtension()` called | Hidden |
+| Calldata | `calldata-ready` | Extension returns data | Hidden |
+| Tx Pending | `transaction-pending` | `submitCredential()` called | Hidden |
+| Verified (`verified`) | `valid` | On-chain credential confirmed | Visible |
 
 ---
 
@@ -365,6 +422,14 @@ Your dApp Page
   |       |-- Verification notice (gate only)
   |       |-- CTA: cycles per step
 ```
+
+**Variant C integration rules:**
+1. **Progressive disclosure** -- show the deposit form first with a status badge. The verification gate only appears after the user clicks the main CTA.
+2. **Step 0 for expired** -- expired credentials start at Step 0 (with "Access Expired" badge), not at the gate. Same progressive disclosure applies.
+3. **Local gate state** -- the transition from Step 0 → Gate is a local UI state (`showGate`), not derived from `KeyringFlowState`. Cancel from gate returns to Step 0.
+4. **Subscription runs continuously** -- the extension caches `credentialData` across page refreshes. The subscription must run at all times to pick up cached data and resume at `calldata-ready`. However, only `credentialData` should trigger flow transitions — don't auto-transition to `install`/`start` during Step 0 (track extension installation status separately).
+5. **Preserve credentialData on cancel** -- when the user cancels from `calldata-ready`, reset the flow state but keep `credentialData`. On re-entry (clicking the main CTA again), check for existing `credentialData` and skip directly to `calldata-ready` instead of re-launching the extension (which may clear the cached data).
+6. **Invalidate on wallet change** -- when the connected wallet address changes, clear `credentialData` and reset flow state to `loading`. The subscription validates `credentialData.trader` against the current address; mismatched data is silently ignored.
 
 ---
 
