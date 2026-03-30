@@ -206,8 +206,8 @@ importers:
         specifier: 0.29.0
         version: 0.29.0(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@keyringnetwork/keyring-connect-sdk':
-        specifier: 4.1.0-alpha.3
-        version: 4.1.0-alpha.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: 4.1.0-alpha.4
+        version: 4.1.0-alpha.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@noble/hashes':
         specifier: ^1.7.1
         version: 1.8.0
@@ -918,8 +918,8 @@ packages:
   '@keyringnetwork/keyring-connect-sdk@3.2.0':
     resolution: {integrity: sha512-8yj+VWTcKvocvdSHW4nWBWrHz8xSsn0rF89mjdN3swp2yGfGlicAwxbrttWOXfeOydIIw4zAdzEfC8XXC/z0Dg==}
 
-  '@keyringnetwork/keyring-connect-sdk@4.1.0-alpha.3':
-    resolution: {integrity: sha512-1nTj6o8g/iho+9cW6uVgIMZIJMUiw+RaykgAJ9AVDj3vaciT+6ZQ2hXOOZ0wz4Ps/esPVos1NkVF3AQApNi1vg==}
+  '@keyringnetwork/keyring-connect-sdk@4.1.0-alpha.4':
+    resolution: {integrity: sha512-5UeTnG8F55pCgw85WHYuBV8XBsWMFWYwQaIk4rGrx0Q/QL4CMJ5Oi7gVaSFjO48j9RLQiB06VQezEug4wQHQWw==}
 
   '@keyringnetwork/keyring-core-sdk@1.0.0-alpha.1':
     resolution: {integrity: sha512-+L7HAW2+7fbYtUEA+zrDN1ekWQAv1qun3dtlCAFte9bikl9nb0Fl8stB4ibMVnyO3ch7AO5mkTOLgyiDlvLP3A==}
@@ -7194,7 +7194,7 @@ snapshots:
     dependencies:
       '@keyringnetwork/contracts-abi': 2.6.0
 
-  '@keyringnetwork/keyring-connect-sdk@4.1.0-alpha.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@keyringnetwork/keyring-connect-sdk@4.1.0-alpha.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@keyringnetwork/contracts-abi': 2.6.1
       '@keyringnetwork/keyring-core-sdk': 1.0.0-alpha.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
