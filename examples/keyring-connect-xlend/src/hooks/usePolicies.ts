@@ -34,7 +34,11 @@ export const usePolicies = (): UsePoliciesResult => {
 
   const policies =
     data?.results
-      ?.filter((policy: Policy) => policy.policy_type === PolicyType.CONNECT)
+      ?.filter(
+        (policy: Policy) =>
+          policy.policy_type === PolicyType.CONNECT ||
+          policy.policy_type === PolicyType.PRO_CONNECT
+      )
       ?.map((policy: Policy) => policy) || DEFAULT_POLICIES;
 
   // Handle all policy selection and update logic
