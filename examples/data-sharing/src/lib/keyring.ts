@@ -28,6 +28,14 @@ export interface PartnerConfig {
   retention_days: number;
 }
 
+export interface RecordDetail {
+  state: string;
+  external_user_id: string | null;
+  verified_data: Record<string, unknown>;
+  unavailable_fields: string[];
+  proof_metadata: Record<string, unknown>;
+}
+
 export interface Session {
   session_id: string;
   session_token: string;
@@ -94,3 +102,12 @@ export const createSession = (input: {
     method: "POST",
     body: JSON.stringify(input),
   });
+
+/**
+ * Read a record, values included.
+ *
+ * The fallback when a webhook has not arrived. 404 until a proof is accepted, 410 once
+ * retention has purged the values.
+ */
+export const getRecord = (sessionId: string) =>
+  call<RecordDetail>(`/records/${sessionId}`);
