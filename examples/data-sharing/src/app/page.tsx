@@ -20,6 +20,21 @@ const PROGRESS: Record<DataSharingStatus, string> = {
   expired: "Expired",
 };
 
+/** What our own backend knows about a finished request. */
+interface SharedRecord {
+  source: "webhook" | "record";
+  external_user_id: string | null;
+  verified_data: Record<string, unknown>;
+  unavailable_fields: string[];
+  datasource_id: string | null;
+}
+
+const ENDED: Record<string, string> = {
+  declined: "You declined. Nothing was shared.",
+  expired: "The request expired before it was finished.",
+  failed: "The request could not be completed, so nothing was shared.",
+};
+
 const toggle = (values: string[], value: string) =>
   values.includes(value)
     ? values.filter((entry) => entry !== value)
@@ -35,6 +50,7 @@ export default function Home() {
 
   const [status, setStatus] = useState<DataSharingStatus | null>(null);
   const [outcome, setOutcome] = useState<DataSharingResult | null>(null);
+  const [record, setRecord] = useState<SharedRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // What this partner may ask for is server-held configuration, not something the page
@@ -53,6 +69,7 @@ export default function Home() {
   const share = async () => {
     setError(null);
     setOutcome(null);
+    setRecord(null);
     setStatus("launching");
 
     try {
@@ -71,15 +88,22 @@ export default function Home() {
       const session = await response.json();
       if (!response.ok) throw new Error(session.detail ?? "Could not start");
 
-      setOutcome(
-        await KeyringConnect.launchDataSharing({
-          session_id: session.session_id,
-          session_token: session.session_token,
-          expires_at: session.expires_at,
-          krn_config: session.krn_config,
-          onStatusChange: setStatus,
-        }),
-      );
+      const result = await KeyringConnect.launchDataSharing({
+        session_id: session.session_id,
+        session_token: session.session_token,
+        expires_at: session.expires_at,
+        krn_config: session.krn_config,
+        onStatusChange: setStatus,
+      });
+      setOutcome(result);
+
+      // The data never came back through the browser. We read it from our own backend,
+      // which is where Keyring delivered it.
+      if (result.status === "completed") {
+        const delivered = await fetch(`/api/record/${session.session_id}`);
+        if (delivered.ok) setRecord(await delivered.json());
+        else setError("The data has not reached us yet. Try again in a moment.");
+      }
     } catch (thrown) {
       setStatus(null);
       setError(thrown instanceof Error ? thrown.message : "Something went wrong");
@@ -91,6 +115,80 @@ export default function Home() {
 
   if (!partner) {
     return <p className="text-sm text-slate-500">{error ?? "Loading…"}</p>;
+  }
+
+  const labelFor = (fieldId: string) =>
+    partner.allowed_fields.find((field) => field.field_id === fieldId)?.label ??
+    fieldId;
+
+  const sourceName = (id: string | null) =>
+    partner.allowed_datasources.find((source) => source.id === id)?.name ?? id;
+
+  const startOver = () => {
+    setOutcome(null);
+    setRecord(null);
+    setStatus(null);
+    setError(null);
+  };
+
+  if (outcome) {
+    return (
+      <div className="space-y-6" data-testid={`outcome-${outcome.status}`}>
+        <h1 className="text-2xl font-semibold">
+          {outcome.status === "completed" ? "Shared" : "Not shared"}
+        </h1>
+
+        {record ? (
+          <>
+            <dl className="divide-y divide-slate-200 rounded border border-slate-200 bg-white">
+              {Object.entries(record.verified_data).map(([fieldId, value]) => (
+                <div key={fieldId} className="flex justify-between gap-4 p-3">
+                  <dt className="text-sm text-slate-500">
+                    {labelFor(fieldId)}
+                  </dt>
+                  <dd className="text-sm font-medium">{String(value)}</dd>
+                </div>
+              ))}
+            </dl>
+
+            {record.unavailable_fields.length > 0 && (
+              <p className="text-sm text-slate-500">
+                {sourceName(record.datasource_id)} had nothing for{" "}
+                {record.unavailable_fields.map(labelFor).join(", ")}.
+              </p>
+            )}
+
+            <div className="space-y-1 text-xs text-slate-500">
+              <p>Proved from {sourceName(record.datasource_id)}.</p>
+              <p>
+                Filed against <code>{record.external_user_id}</code>, the id we
+                sent when we opened the request.
+              </p>
+              <p>
+                Reached us{" "}
+                {record.source === "webhook"
+                  ? "over the signed webhook."
+                  : "by reading the record, because no webhook had arrived."}
+              </p>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-slate-600">
+            {ENDED[outcome.status] ?? "Nothing was shared."}
+            {outcome.errorCode ? ` (${outcome.errorCode})` : ""}
+          </p>
+        )}
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+
+        <button
+          onClick={startOver}
+          className="w-full rounded border border-slate-300 p-3 text-sm"
+        >
+          Start over
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -183,16 +281,7 @@ export default function Home() {
         Share my data
       </button>
 
-      {status && !outcome && (
-        <p className="text-sm text-slate-600">{PROGRESS[status]}</p>
-      )}
-
-      {outcome && (
-        <p className="text-sm" data-testid={`outcome-${outcome.status}`}>
-          {outcome.status}
-          {outcome.errorCode ? ` — ${outcome.errorCode}` : ""}
-        </p>
-      )}
+      {status && <p className="text-sm text-slate-600">{PROGRESS[status]}</p>}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
