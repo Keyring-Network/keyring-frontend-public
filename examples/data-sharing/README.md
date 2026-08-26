@@ -71,7 +71,6 @@ Then open http://localhost:3000, choose what to ask for, and click.
 | --------------------- | ---------------------------------------------------------- |
 | `src/lib/keyring.ts`  | Every call to Keyring. The only file that sees the API key |
 | `src/lib/verify.ts`   | Webhook signature verification. **Copy this one**          |
-| `src/lib/store.ts`    | Where deliveries are kept. **Replace this one**            |
 | `src/app/api/partner` | What this partner may ask for. Drives the pickers          |
 | `src/app/api/session` | Opens a request                                            |
 | `src/app/api/webhook` | Where Keyring delivers                                     |
@@ -96,9 +95,9 @@ flowchart TD
     D -->|no| E["400 · do not retry"]
     D -->|yes| F{event_id seen before?}
     F -->|yes| G["200 · already handled"]
-    F -->|no| H[store it]
+    F -->|no| H[file it against your user]
     H --> I["200 · done"]
-    H -.->|store unavailable| J["500 · please retry"]
+    H -.->|your database is down| J["500 · please retry"]
 ```
 
 **`external_user_id` is yours.** Keyring has no idea who your user is. You send your own
@@ -106,10 +105,13 @@ identifier when opening the request and it comes back in the webhook, which is h
 whose data arrived. Keyring never validates or resolves it — it only carries it. This app
 sends a fixed `demo-user-1` and shows it coming back.
 
-**The store is in memory.** It empties on restart and is not shared between instances. That is
-fine for a demo and not fine for anything else — `src/lib/store.ts` is the file to replace with
-your database.
+**This demo keeps nothing.** The webhook is verified and logged, then dropped, and the page
+reads the values back from Keyring with the API key. That keeps the example to one moving
+part, but it is not the shape you want.
 
-**There is a fallback.** If no webhook has arrived when the page asks, `/api/record` reads the
-record from Keyring with the API key instead, and the page says which route the data came by.
-A real integration would rely on the webhook and treat this as the exception it is.
+**Yours should store the delivery.** Write it to your database in `src/app/api/webhook`, keyed
+on `external_user_id`, and answer `/api/record` from your own rows. The webhook is the path
+that matters: it arrives once, unprompted, and reading the record back on every page load
+turns one delivery into a request per viewer. Keep the read as the exception for when a
+delivery has not arrived — an unreachable URL, or one still retrying. Note the dedup branch in
+the diagram above needs somewhere to remember `event_id`, so it arrives with your database.

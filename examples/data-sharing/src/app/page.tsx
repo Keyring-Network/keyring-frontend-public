@@ -6,13 +6,13 @@ import {
   type DataSharingResult,
   type DataSharingStatus,
 } from "@keyringnetwork/keyring-connect-sdk";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const PROGRESS: Record<DataSharingStatus, string> = {
   launching: "Opening Keyring Connect…",
   loading_plan: "Loading the request…",
-  awaiting_consent: "Waiting for you to review the request",
   selecting_source: "Waiting for you to choose an account",
+  requesting_permission: "Waiting for you to approve the request",
   proving: "Proving — sign in to your account in the tab that opened",
   completed: "Done",
   declined: "Declined",
@@ -22,7 +22,6 @@ const PROGRESS: Record<DataSharingStatus, string> = {
 
 /** What our own backend knows about a finished request. */
 interface SharedRecord {
-  source: "webhook" | "record";
   external_user_id: string | null;
   verified_data: Record<string, unknown>;
   unavailable_fields: string[];
@@ -66,7 +65,14 @@ export default function Home() {
       .catch(() => setError("Could not load the partner configuration"));
   }, []);
 
+  // Cancelling cannot recall a launch already in flight, so each attempt carries a token
+  // and a stale one is ignored when it eventually settles.
+  const attempt = useRef(0);
+
   const share = async () => {
+    const current = ++attempt.current;
+    const live = () => attempt.current === current;
+
     setError(null);
     setOutcome(null);
     setRecord(null);
@@ -93,8 +99,9 @@ export default function Home() {
         session_token: session.session_token,
         expires_at: session.expires_at,
         krn_config: session.krn_config,
-        onStatusChange: setStatus,
+        onStatusChange: (next) => live() && setStatus(next),
       });
+      if (!live()) return;
       setOutcome(result);
 
       // The data never came back through the browser. We read it from our own backend,
@@ -105,6 +112,7 @@ export default function Home() {
         else setError("The data has not reached us yet. Try again in a moment.");
       }
     } catch (thrown) {
+      if (!live()) return;
       setStatus(null);
       setError(thrown instanceof Error ? thrown.message : "Something went wrong");
     }
@@ -125,6 +133,7 @@ export default function Home() {
     partner.allowed_datasources.find((source) => source.id === id)?.name ?? id;
 
   const startOver = () => {
+    attempt.current += 1;
     setOutcome(null);
     setRecord(null);
     setStatus(null);
@@ -163,12 +172,6 @@ export default function Home() {
               <p>
                 Filed against <code>{record.external_user_id}</code>, the id we
                 sent when we opened the request.
-              </p>
-              <p>
-                Reached us{" "}
-                {record.source === "webhook"
-                  ? "over the signed webhook."
-                  : "by reading the record, because no webhook had arrived."}
               </p>
             </div>
           </>
@@ -280,6 +283,15 @@ export default function Home() {
       >
         Share my data
       </button>
+
+      {running && (
+        <button
+          onClick={startOver}
+          className="w-full rounded border border-slate-300 p-3 text-sm"
+        >
+          Cancel
+        </button>
+      )}
 
       {status && <p className="text-sm text-slate-600">{PROGRESS[status]}</p>}
 

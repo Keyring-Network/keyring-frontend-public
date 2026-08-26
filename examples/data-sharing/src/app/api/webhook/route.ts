@@ -1,9 +1,18 @@
-import { alreadyHandled, record, WebhookEvent } from "@/lib/store";
 import { verifySignature } from "@/lib/verify";
 import { NextRequest, NextResponse } from "next/server";
 
+interface WebhookEvent {
+  event_id: string;
+  session_id: string;
+  user_context: { external_user_id: string | null; purpose: string };
+  verified_data: Record<string, unknown>;
+}
+
 /**
  * Where Keyring delivers verified data.
+ *
+ * This demo keeps nothing, so the delivery is verified and logged rather than filed against
+ * a user. Yours would write it to your database here, keyed on `external_user_id`.
  *
  * The status codes matter: Keyring retries a 429 or a 5xx and gives up on anything else, so
  * a bad signature answers 400 rather than making it retry four more times against a secret
@@ -32,11 +41,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ detail: "Malformed body" }, { status: 400 });
   }
 
-  if (alreadyHandled(event.event_id)) {
-    return NextResponse.json({ duplicate: true });
-  }
-
-  record(event);
   console.log(
     `Received ${Object.keys(event.verified_data).length} verified field(s) ` +
       `for ${event.user_context.external_user_id}`,
