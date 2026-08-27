@@ -22,11 +22,9 @@ type PanelState =
 export function SharedDataPanel({
   policyId,
   address,
-  verified,
 }: {
   policyId: number;
   address?: string;
-  verified: boolean;
 }) {
   const [state, setState] = useState<PanelState>({ kind: "idle" });
 
@@ -50,6 +48,7 @@ export function SharedDataPanel({
       setState(rows.length ? { kind: "ready", rows } : { kind: "empty" });
     } catch (error) {
       setState({ kind: "idle" });
+      console.error(error);
     }
   };
 

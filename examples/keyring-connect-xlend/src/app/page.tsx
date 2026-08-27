@@ -126,11 +126,7 @@ export default function KeyringConnectDemo() {
           </Card>
 
           {policy.data_sharing_enabled && (
-            <SharedDataPanel
-              policyId={policy.id}
-              address={address}
-              verified={flowState === "valid"}
-            />
+            <SharedDataPanel policyId={policy.id} address={address} />
           )}
         </div>
       </div>
