@@ -12,6 +12,7 @@ import { KeyringConnectModule } from "@/components/demo/KeyringConnectModule";
 import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import { KeyringConnectLinks } from "@/components/demo/KeyringConnectModule/KeyringConnectLinks";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
+import { SharedDataPanel } from "@/components/demo/SharedDataPanel";
 
 export type FlowState =
   | "loading"
@@ -32,7 +33,7 @@ export default function KeyringConnectDemo() {
   const { policy } = usePolicyStore();
 
   const { status: credentialStatus, error } = useCheckCredential(
-    policy.onchain_id
+    policy.onchain_id,
   );
 
   // Update flow state based on credential status
@@ -87,7 +88,7 @@ export default function KeyringConnectDemo() {
   }
 
   return (
-    <div className="bg-blue-100/50 h-full">
+    <div className="bg-blue-100/50 h-dvh">
       <AppHeader />
       <div className="flex justify-center items-center py-8 px-4">
         <div className="w-full max-w-xl">
@@ -123,6 +124,10 @@ export default function KeyringConnectDemo() {
               )}
             </CardContent>
           </Card>
+
+          {policy.data_sharing_enabled && (
+            <SharedDataPanel policyId={policy.id} address={address} />
+          )}
         </div>
       </div>
       <KeyringConnectLinks />

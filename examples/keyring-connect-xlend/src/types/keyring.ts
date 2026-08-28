@@ -21,6 +21,7 @@ export interface Policy {
   id: number;
   costs?: PolicyCostSchema[];
   policy_type?: PolicyType;
+  data_sharing_enabled: boolean;
   public_key?: PublicKeySchema;
 }
 

@@ -68,7 +68,7 @@ export function KeyringConnectModule({
       // This is needed because we switch between dev and prod environments
       return baseValidation && credentialData.key === policy.public_key?.n;
     },
-    [address, policyId, chainId, policy]
+    [address, policyId, chainId, policy],
   );
 
   // Subscribe to the extension state changes
@@ -111,8 +111,8 @@ export function KeyringConnectModule({
       if (!supportedChainIds?.includes(chainId)) {
         window.alert(
           `This policy is not supported for this chain. Please select a different policy. Supported chains: ${supportedChainIds?.join(
-            ", "
-          )}. Current chain: ${chainId}`
+            ", ",
+          )}. Current chain: ${chainId}`,
         );
         return;
       }
@@ -132,7 +132,9 @@ export function KeyringConnectModule({
         krn_config:
           environment === "dev"
             ? {
-                keyring_api_url: "https://main.api.keyring-backend.krndev.net",
+                keyring_api_url:
+                  process.env.NEXT_PUBLIC_KEYRING_API_BASE_URL ??
+                  "https://main.api.keyring-backend.krndev.net",
                 keyring_user_app_url: "https://app.keyringdev.network",
               }
             : undefined,

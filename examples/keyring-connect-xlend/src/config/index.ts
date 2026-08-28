@@ -29,10 +29,14 @@ export const networks = [
 ] as [AppKitNetwork, ...AppKitNetwork[]];
 
 //Set up the Wagmi Adapter (Config)
+// wagmi 2.x and the adapter's bundled @wagmi/core 3.x type this storage with different
+// generics; the objects are structurally identical, so bridge the nominal mismatch.
+type AdapterStorage = ConstructorParameters<typeof WagmiAdapter>[0]["storage"];
+
 export const wagmiAdapter = new WagmiAdapter({
   storage: createStorage({
     storage: cookieStorage,
-  }),
+  }) as AdapterStorage,
   ssr: true,
   projectId: REOWN_PROJECT_ID,
   networks,
@@ -46,5 +50,7 @@ export const DEFAULT_POLICIES: Policy[] = [
   {
     name: "Keyring Connect Test",
     id: 7,
+    data_sharing_enabled: false,
+    onchain_id: 7,
   },
 ];

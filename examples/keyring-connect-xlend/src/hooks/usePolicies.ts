@@ -17,8 +17,12 @@ type UsePoliciesResult = {
 };
 
 const getPolicies = async (env: "prod" | "dev") => {
+  const devUrl =
+    process.env.NEXT_PUBLIC_KEYRING_API_BASE_URL ??
+    "https://main.api.keyring-backend.krndev.net";
+  const prodUrl = "https://main.api.keyring-backend.krnprod.net";
   const response = await fetch(
-    `https://main.api.keyring-backend.krn${env}.net/api/v1/policies/public`
+    `${env === "prod" ? prodUrl : devUrl}/api/v1/policies/public`,
   );
   return (await response.json()) as PaginatedResponseSchema_PolicySchema;
 };
@@ -51,7 +55,7 @@ export const usePolicies = (): UsePoliciesResult => {
       if (!selectedPolicy) {
         // Try to find the default policy in the current environment's policies
         const defaultPolicy = policies.find(
-          (p) => p.id === DEFAULT_POLICIES[0].id
+          (p) => p.id === DEFAULT_POLICIES[0].id,
         );
 
         // If the default policy exists in this environment, use it
