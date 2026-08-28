@@ -1,27 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Reads this policy's verified proof data from Keyring.
+ * Reads a policy's verified proof data from Keyring with the caller's own API key.
  *
- * Server-side only: the API key never reaches the browser. Unconfigured or refused
- * responses come back as-is so the panel can decide to stay hidden.
- *
+ * The key is the authorization: it is policy-scoped and provisioned by Keyring, so only
+ * its holder can read anything. It arrives per request, is forwarded, and is never
+ * stored or logged here.
  */
 export async function GET(request: NextRequest) {
-  const apiKey = process.env.KEYRING_API_KEY;
+  const apiKey = request.headers.get("x-api-key");
   if (!apiKey) {
-    return NextResponse.json(
-      { detail: "KEYRING_API_KEY is not set" },
-      { status: 501 },
-    );
+    return NextResponse.json({ detail: "X-API-Key header is required" }, { status: 401 });
   }
 
   const policyId = request.nextUrl.searchParams.get("policy_id");
   if (!policyId) {
-    return NextResponse.json(
-      { detail: "policy_id is required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ detail: "policy_id is required" }, { status: 400 });
   }
 
   const wallet = request.nextUrl.searchParams.get("wallet_address");
@@ -32,13 +26,10 @@ export async function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_KEYRING_API_BASE_URL ??
     "http://localhost:8000";
 
-  const upstream = await fetch(
-    `${base}/api/v1/policies/${policyId}/proof-data${query}`,
-    {
-      headers: { "X-API-Key": apiKey },
-      cache: "no-store",
-    },
-  );
+  const upstream = await fetch(`${base}/api/v1/policies/${policyId}/proof-data${query}`, {
+    headers: { "X-API-Key": apiKey },
+    cache: "no-store",
+  });
 
   return NextResponse.json(await upstream.json(), { status: upstream.status });
 }

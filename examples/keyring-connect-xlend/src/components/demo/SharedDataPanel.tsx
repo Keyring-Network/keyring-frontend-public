@@ -1,9 +1,10 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { Loader } from "lucide-react";
+import { Input } from "../ui/input";
 
 interface ProofRow {
   entity_id: string;
@@ -17,6 +18,7 @@ type PanelState =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "empty" }
+  | { kind: "error"; detail: string }
   | { kind: "ready"; rows: ProofRow[] };
 
 export function SharedDataPanel({
@@ -27,12 +29,14 @@ export function SharedDataPanel({
   address?: string;
 }) {
   const [state, setState] = useState<PanelState>({ kind: "idle" });
+  // Held in memory only, forwarded per request, never persisted.
+  const [apiKey, setApiKey] = useState("");
 
-  // Rows belong to one wallet and one policy; a switch empties the panel.
-  useEffect(() => setState({ kind: "idle" }), [address, policyId]);
+  // Rows belong to one key, one wallet and one policy; a switch empties the panel.
+  useEffect(() => setState({ kind: "idle" }), [address, policyId, apiKey]);
 
   const getUserData = async () => {
-    if (!address) {
+    if (!address || !apiKey) {
       setState({ kind: "idle" });
       return;
     }
@@ -41,16 +45,21 @@ export function SharedDataPanel({
       setState({ kind: "loading" });
       const response = await fetch(
         `/api/proof-data?policy_id=${policyId}&wallet_address=${address}`,
+        { headers: { "x-api-key": apiKey } },
       );
 
-      if (!response.ok) return setState({ kind: "idle" });
-
       const body = await response.json();
-      const rows: ProofRow[] = body?.results ?? [];
+      if (!response.ok) {
+        return setState({
+          kind: "error",
+          detail: body?.detail ?? `Request failed (${response.status})`,
+        });
+      }
 
+      const rows: ProofRow[] = body?.results ?? [];
       setState(rows.length ? { kind: "ready", rows } : { kind: "empty" });
     } catch (error) {
-      setState({ kind: "idle" });
+      setState({ kind: "error", detail: "Could not reach the server." });
       console.error(error);
     }
   };
@@ -94,6 +103,9 @@ export function SharedDataPanel({
           </p>
         );
 
+      case "error":
+        return <p className="text-sm text-red-500">{state.detail}</p>;
+
       default:
         break;
     }
@@ -108,15 +120,28 @@ export function SharedDataPanel({
               Shared with this policy&apos;s owner
             </h3>
             <p className="text-sm text-gray-600 mt-1 mb-3">
-              Verified fields for your wallet, delivered over the proof-data
-              API.
+              What the policy owner receives over the proof-data API, for the
+              connected wallet. Your key is forwarded to Keyring and not
+              stored.
             </p>
-            <Button onClick={getUserData} disabled={state.kind === "loading"}>
-              Get user data
-              {state.kind === "loading" && (
-                <Loader className="ml-2 animate-spin" />
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Input
+                type="password"
+                placeholder="Keyring API key"
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+                autoComplete="off"
+              />
+              <Button
+                onClick={getUserData}
+                disabled={state.kind === "loading" || !apiKey || !address}
+              >
+                Get user data
+                {state.kind === "loading" && (
+                  <Loader className="ml-2 animate-spin" />
+                )}
+              </Button>
+            </div>
           </div>
 
           {render()}
