@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Loader } from "lucide-react";
 
@@ -27,6 +27,9 @@ export function SharedDataPanel({
   address?: string;
 }) {
   const [state, setState] = useState<PanelState>({ kind: "idle" });
+
+  // Rows belong to one wallet and one policy; a switch empties the panel.
+  useEffect(() => setState({ kind: "idle" }), [address, policyId]);
 
   const getUserData = async () => {
     if (!address) {
