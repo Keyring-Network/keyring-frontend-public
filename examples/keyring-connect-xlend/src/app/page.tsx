@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LendingTabsMock } from "@/components/demo/XLendAppInterface/LendingTabsMock";
 import { CtaMock } from "@/components/demo/XLendAppInterface/CtaMock";
 import { useEffect, useState } from "react";
-import type { ProofData } from "@/lib/proofData";
+import { useProofData } from "@/hooks/useProofData";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
@@ -47,7 +47,7 @@ function KeyringConnectDemoContent() {
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
-  const [proofData, setProofData] = useState<ProofData | null>(null);
+  const proofData = useProofData(policy.id);
 
   const { status: credentialStatus, error } = useCheckCredential(
     policy.onchain_id,
@@ -121,7 +121,6 @@ function KeyringConnectDemoContent() {
 
               {shouldShowKeyringModule && (
                 <KeyringConnectModule
-                  onProofData={setProofData}
                   policyId={policy.onchain_id}
                   flowState={flowState}
                   setFlowState={setFlowState}
