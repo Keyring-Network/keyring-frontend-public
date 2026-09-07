@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LendingTabsMock } from "@/components/demo/XLendAppInterface/LendingTabsMock";
 import { CtaMock } from "@/components/demo/XLendAppInterface/CtaMock";
 import { useEffect, useState } from "react";
+import type { ProofData } from "@/lib/proofData";
+import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
 import { KeyringConnectModule } from "@/components/demo/KeyringConnectModule";
@@ -26,11 +28,26 @@ export type FlowState =
   | "valid";
 
 export default function KeyringConnectDemo() {
+  const { address } = useAppKitAccount();
+  const { caipNetworkId } = useAppKitNetwork();
+  const { policy } = usePolicyStore();
+  const { environment } = useEnvironmentStore();
+
+  // Reset local demo state when the verification context changes.
+  return (
+    <KeyringConnectDemoContent
+      key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
+    />
+  );
+}
+
+function KeyringConnectDemoContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
+  const [proofData, setProofData] = useState<ProofData | null>(null);
 
   const { status: credentialStatus, error } = useCheckCredential(
     policy.onchain_id,
@@ -104,6 +121,7 @@ export default function KeyringConnectDemo() {
 
               {shouldShowKeyringModule && (
                 <KeyringConnectModule
+                  onProofData={setProofData}
                   policyId={policy.onchain_id}
                   flowState={flowState}
                   setFlowState={setFlowState}
@@ -125,8 +143,11 @@ export default function KeyringConnectDemo() {
             </CardContent>
           </Card>
 
-          {policy.data_sharing_enabled && (
-            <SharedDataPanel policyId={policy.id} address={address} />
+          {["nonce_only", "broad"].includes(policy.data_sharing_access_mode) && (
+            <SharedDataPanel
+              key={proofData?.nonce ?? ""}
+              proofData={proofData}
+            />
           )}
         </div>
       </div>

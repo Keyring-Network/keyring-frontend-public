@@ -50,7 +50,7 @@ export const DEFAULT_POLICIES: Policy[] = [
   {
     name: "Keyring Connect Test",
     id: 7,
-    data_sharing_enabled: false,
+    data_sharing_access_mode: "disabled",
     onchain_id: 7,
   },
 ];

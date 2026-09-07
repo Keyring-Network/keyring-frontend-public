@@ -1,6 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  ProofData,
+  ProofDataExtensionState,
+  validProofData,
+} from "@/lib/proofData";
 import { Button } from "@/components/ui/button";
 import {
   KeyringConnect,
@@ -27,6 +32,7 @@ interface KeyringConnectModuleProps {
   flowState: FlowState | null;
   credentialExpired: boolean;
   setFlowState: (flowState: FlowState) => void;
+  onProofData: (data: ProofData | null) => void;
 }
 
 /**
@@ -41,7 +47,9 @@ export function KeyringConnectModule({
   flowState,
   credentialExpired,
   setFlowState,
+  onProofData,
 }: KeyringConnectModuleProps) {
+  const [proofLaunchReady, setProofLaunchReady] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [calldata, setCalldata] = useState<CredentialData | null>(null);
 
@@ -73,13 +81,20 @@ export function KeyringConnectModule({
 
   // Subscribe to the extension state changes
   useEffect(() => {
-    const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
+    let active = true;
+    const unsubscribe = KeyringConnect.subscribeToExtensionState((state: ProofDataExtensionState | null) => {
+      if (!active) return;
       if (!state) {
         setFlowState("install");
         return;
       }
 
       const { credentialData } = state;
+      if (proofLaunchReady) {
+        onProofData(
+          validProofData(state.proofData, policy.id) ? state.proofData : null,
+        );
+      }
 
       if (credentialData && validCredentialData(credentialData)) {
         setFlowState("calldata-ready");
@@ -90,10 +105,13 @@ export function KeyringConnectModule({
       }
     });
 
-    return unsubscribe; // Cleanup on unmount
+    return () => {
+      active = false;
+      unsubscribe();
+    };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validCredentialData, flowState, environment]);
+  }, [validCredentialData, flowState, environment, onProofData, proofLaunchReady]);
 
   // LAUNCH THE EXTENSION
   // NOTE: `KeyringConnect.launchExtension` takes internallycare of checking if the extension is installed.
@@ -123,7 +141,9 @@ export function KeyringConnectModule({
         app_url: window.location.origin,
         name: "xLend",
         logo_url: `${window.location.origin}/xlend-icon.svg`,
-        policy_id: policyId,
+        // Extension/API requests use the backend ID; credential validation above
+        // uses the separately supplied on-chain policy ID.
+        policy_id: policy.id,
         credential_config: {
           chain_id: chainId as KrnSupportedChainId,
           wallet_address: address,
@@ -143,8 +163,12 @@ export function KeyringConnectModule({
       // Update state to show progress
       setFlowState("progress");
       setCalldata(null);
+      setProofLaunchReady(false);
+      onProofData(null);
 
       await KeyringConnect.launchExtension(exampleConfig);
+      // Restart polling after launch has cleared the extension's previous proof.
+      setProofLaunchReady(true);
     } catch (error) {
       console.error("Failed to launch extension:", error);
     }
@@ -212,6 +236,8 @@ export function KeyringConnectModule({
               <Button
                 variant="ghost"
                 onClick={() => {
+                  setProofLaunchReady(false);
+                  onProofData(null);
                   setFlowState("start");
                 }}
               >
