@@ -46,6 +46,11 @@ export const solanaWeb3JsAdapter = new SolanaAdapter();
 
 export const config = wagmiAdapter.wagmiConfig;
 
+// Public guide for the proof-data API this demo previews. Route is root-level in
+// the docs app; adjust the host here if the docs are served elsewhere.
+export const DATA_SHARING_DOCS_URL =
+  "https://docs.keyring.network/connect/data-sharing";
+
 export const DEFAULT_POLICIES: Policy[] = [
   {
     name: "Keyring Connect Test",

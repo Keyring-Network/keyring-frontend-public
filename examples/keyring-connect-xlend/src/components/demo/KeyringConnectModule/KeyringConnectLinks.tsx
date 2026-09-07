@@ -3,6 +3,7 @@ import {
   Code2,
   Github,
   BookOpen,
+  Database,
   X,
   ChevronRight,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import {
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { usePolicies } from "@/hooks/usePolicies";
+import { DATA_SHARING_DOCS_URL } from "@/config";
 
 export const KeyringConnectLinks = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -93,6 +95,19 @@ export const KeyringConnectLinks = () => {
           >
             <BookOpen className="w-3 h-3" />
             <span className="flex-1 text-left">SDK Docs</span>
+            <ExternalLink className="w-3 h-3" />
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start gap-2 h-8 text-xs text-teal hover:bg-firefly-100"
+            onClick={() => {
+              window.open(DATA_SHARING_DOCS_URL, "_blank");
+            }}
+          >
+            <Database className="w-3 h-3" />
+            <span className="flex-1 text-left">Data Sharing Docs</span>
             <ExternalLink className="w-3 h-3" />
           </Button>
 

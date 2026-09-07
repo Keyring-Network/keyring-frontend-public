@@ -105,7 +105,7 @@ function KeyringConnectDemoContent() {
   }
 
   return (
-    <div className="bg-blue-100/50 h-dvh">
+    <div className="bg-blue-100/50 min-h-dvh">
       <AppHeader />
       <div className="flex justify-center items-center py-8 px-4">
         <div className="w-full max-w-xl">
