@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DATA_SHARING_DOCS_URL } from "@/config";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
+import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import type { ProofData } from "@/lib/proofData";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +72,7 @@ export function SharedDataPanel({
   proofData: ProofData | null;
 }) {
   const { policy } = usePolicyStore();
+  const { environment } = useEnvironmentStore();
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<PanelState>({ kind: "idle" });
   const controller = useRef<AbortController | null>(null);
@@ -88,6 +90,7 @@ export function SharedDataPanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          environment,
           policy_id: proofData.policyId,
           nonce: proofData.nonce,
         }),
