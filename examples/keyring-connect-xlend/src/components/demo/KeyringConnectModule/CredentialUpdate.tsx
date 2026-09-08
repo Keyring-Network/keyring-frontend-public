@@ -28,8 +28,8 @@ export const CredentialUpdate = ({
   const buttonText = simulationError
     ? "Retry simulation"
     : isSimulating
-    ? "Simulating transaction..."
-    : "Update credential";
+      ? "Simulating transaction..."
+      : "Update credential";
 
   return (
     <>
@@ -55,7 +55,7 @@ export const CredentialUpdate = ({
               : "Show technical details"}
           </button>
           {showErrorDetails && (
-            <div className="mt-2 text-red-500 text-xs max-w-sm max-h-32 overflow-y-auto whitespace-pre-wrap break-words border border-red-200 p-2 rounded bg-red-50">
+            <div className="mt-2 text-red-500 text-xs max-w-[470px] max-h-32 overflow-y-auto whitespace-pre-wrap break-words border border-red-200 p-2 rounded bg-red-50">
               <p>{simulationErrorDetails}</p>
             </div>
           )}
