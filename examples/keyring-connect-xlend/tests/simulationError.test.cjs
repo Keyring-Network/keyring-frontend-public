@@ -1,11 +1,12 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import {
+/* eslint-disable @typescript-eslint/no-require-imports -- Match the compiled utility's CommonJS Viem error classes. */
+const assert = require("node:assert/strict");
+const test = require("node:test");
+const {
   BaseError, ContractFunctionRevertedError, HttpRequestError,
   InsufficientFundsError, SocketClosedError, TimeoutError,
   WebSocketRequestError, encodeErrorResult, parseAbi,
-} from "viem";
-import { getSimulationErrorMessage as message } from "../src/utils/simulationError.ts";
+} = require("viem");
+const { getSimulationErrorMessage: message } = require("../.test-build/simulationError.js");
 
 const abi = parseAbi([
   "error ErrInvalidCredential(uint256 policyId, address entity, string reason)",
