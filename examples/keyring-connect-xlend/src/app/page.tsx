@@ -53,7 +53,7 @@ export default function KeyringConnectDemo() {
 }
 
 function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
-  usePolicies(initialPolicyId);
+  const { isPolicyResolved, error: policyError } = usePolicies(initialPolicyId);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
@@ -63,11 +63,19 @@ function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
   return (
     <KeyringConnectDemoContent
       key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
+      isPolicyResolved={isPolicyResolved}
+      hasPolicyError={!!policyError}
     />
   );
 }
 
-function KeyringConnectDemoContent() {
+function KeyringConnectDemoContent({
+  isPolicyResolved,
+  hasPolicyError,
+}: {
+  isPolicyResolved: boolean;
+  hasPolicyError: boolean;
+}) {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
@@ -161,9 +169,21 @@ function KeyringConnectDemoContent() {
                 </div>
                 <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-4 sm:gap-x-6">
                   <dt className="text-gray-600">Policy</dt>
-                  <dd className="min-w-0 break-words text-right text-sm text-gray-900">
-                    {policy.name}{" "}
-                    <span className="whitespace-nowrap text-gray-600">({policy.id})</span>
+                  <dd
+                    aria-live="polite"
+                    aria-busy={!isPolicyResolved && !hasPolicyError}
+                    className="min-w-0 break-words text-right text-sm text-gray-900"
+                  >
+                    {isPolicyResolved ? (
+                      <>
+                        {policy.name}{" "}
+                        <span className="whitespace-nowrap text-gray-600">({policy.id})</span>
+                      </>
+                    ) : (
+                      <span className="text-gray-600">
+                        {hasPolicyError ? "Unable to load policy" : "Loading policy…"}
+                      </span>
+                    )}
                   </dd>
                 </div>
               </dl>
