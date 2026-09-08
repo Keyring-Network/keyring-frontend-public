@@ -6,7 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LendingTabsMock } from "@/components/demo/XLendAppInterface/LendingTabsMock";
 import { CtaMock } from "@/components/demo/XLendAppInterface/CtaMock";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useProofData } from "@/hooks/useProofData";
+import { usePolicies } from "@/hooks/usePolicies";
+import type { Policy } from "@/types/keyring";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
@@ -28,6 +31,30 @@ export type FlowState =
   | "valid";
 
 export default function KeyringConnectDemo() {
+  const [initialSelection, setInitialSelection] = useState<{ policyId?: number } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const environment = params.get("environment");
+    if (environment === "dev" || environment === "prod") {
+      useEnvironmentStore.getState().setEnvironment(environment);
+    } else if (environment !== null) {
+      toast.error("Invalid environment in URL. Keeping the current environment.");
+    }
+    const id = params.get("policyId");
+    const policyId = id !== null && /^\d+$/.test(id) && Number.isSafeInteger(Number(id)) && Number(id) > 0
+      ? Number(id)
+      : NaN;
+    setInitialSelection({ policyId: id === null ? undefined : policyId });
+  }, []);
+
+  // Apply the URL environment before mounting the policy query.
+  if (!initialSelection) return <AppHeader />;
+  return <KeyringConnectPage initialPolicyId={initialSelection.policyId} />;
+}
+
+function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
+  const { policies } = usePolicies(initialPolicyId);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
@@ -37,11 +64,12 @@ export default function KeyringConnectDemo() {
   return (
     <KeyringConnectDemoContent
       key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
+      policies={policies}
     />
   );
 }
 
-function KeyringConnectDemoContent() {
+function KeyringConnectDemoContent({ policies }: { policies: Policy[] }) {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
@@ -150,7 +178,7 @@ function KeyringConnectDemoContent() {
           )}
         </div>
       </div>
-      <KeyringConnectLinks />
+      <KeyringConnectLinks policies={policies} />
     </div>
   );
 }

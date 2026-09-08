@@ -18,14 +18,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
-import { usePolicies } from "@/hooks/usePolicies";
+import type { Policy } from "@/types/keyring";
 import { DATA_SHARING_DOCS_URL } from "@/config";
 
-export const KeyringConnectLinks = () => {
+export const KeyringConnectLinks = ({ policies }: { policies: Policy[] }) => {
   const [isVisible, setIsVisible] = useState(false);
   const { policy, setPolicy } = usePolicyStore();
   const { environment, setEnvironment } = useEnvironmentStore();
-  const { policies } = usePolicies();
 
   const selectedPolicy = policies.find((p) => p.id === policy.id);
 

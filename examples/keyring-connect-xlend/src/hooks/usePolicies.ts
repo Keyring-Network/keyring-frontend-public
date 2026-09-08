@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   PaginatedResponseSchema_PolicySchema,
   Policy,
@@ -27,9 +28,10 @@ const getPolicies = async (env: "prod" | "dev") => {
   return (await response.json()) as PaginatedResponseSchema_PolicySchema;
 };
 
-export const usePolicies = (): UsePoliciesResult => {
+export const usePolicies = (initialPolicyId?: number): UsePoliciesResult => {
   const { environment } = useEnvironmentStore();
   const { policy, setPolicy } = usePolicyStore();
+  const pendingPolicyId = useRef(initialPolicyId);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["policies", environment],
@@ -47,6 +49,18 @@ export const usePolicies = (): UsePoliciesResult => {
     // 1. API call has completed (not loading) AND we have API data
     // 2. OR API call failed/completed but we're using default policies
     const shouldValidate = (!isLoading && data) || (!isLoading && !data);
+
+    if (pendingPolicyId.current !== undefined) {
+      // Wait for the requested environment's policies, not the local fallback.
+      if (!data || policies.length === 0) return;
+      const requested = policies.find((p) => p.id === pendingPolicyId.current);
+      const fallback = policies.find((p) => p.id === DEFAULT_POLICIES[0].id) ?? policies[0];
+      if (!requested) toast.error("The requested policy is unavailable in this environment. Using the default policy.");
+      const selected = requested ?? fallback;
+      pendingPolicyId.current = undefined;
+      setPolicy(selected);
+      return;
+    }
 
     if (shouldValidate && policies.length > 0) {
       const selectedPolicy = policies.find((p) => p.id === policy.id);
