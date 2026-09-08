@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   PaginatedResponseSchema_PolicySchema,
   Policy,
@@ -17,15 +18,20 @@ type UsePoliciesResult = {
 };
 
 const getPolicies = async (env: "prod" | "dev") => {
+  const devUrl =
+    process.env.NEXT_PUBLIC_KEYRING_API_BASE_URL ??
+    "https://main.api.keyring-backend.krndev.net";
+  const prodUrl = "https://main.api.keyring-backend.krnprod.net";
   const response = await fetch(
-    `https://main.api.keyring-backend.krn${env}.net/api/v1/policies/public`
+    `${env === "prod" ? prodUrl : devUrl}/api/v1/policies/public`,
   );
   return (await response.json()) as PaginatedResponseSchema_PolicySchema;
 };
 
-export const usePolicies = (): UsePoliciesResult => {
+export const usePolicies = (initialPolicyId?: number): UsePoliciesResult => {
   const { environment } = useEnvironmentStore();
   const { policy, setPolicy } = usePolicyStore();
+  const pendingPolicyId = useRef(initialPolicyId);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["policies", environment],
@@ -44,6 +50,18 @@ export const usePolicies = (): UsePoliciesResult => {
     // 2. OR API call failed/completed but we're using default policies
     const shouldValidate = (!isLoading && data) || (!isLoading && !data);
 
+    if (pendingPolicyId.current !== undefined) {
+      // Wait for the requested environment's policies, not the local fallback.
+      if (!data || policies.length === 0) return;
+      const requested = policies.find((p) => p.id === pendingPolicyId.current);
+      const fallback = policies.find((p) => p.id === DEFAULT_POLICIES[0].id) ?? policies[0];
+      if (!requested) toast.error("The requested policy is unavailable in this environment. Using the default policy.");
+      const selected = requested ?? fallback;
+      pendingPolicyId.current = undefined;
+      setPolicy(selected);
+      return;
+    }
+
     if (shouldValidate && policies.length > 0) {
       const selectedPolicy = policies.find((p) => p.id === policy.id);
 
@@ -51,7 +69,7 @@ export const usePolicies = (): UsePoliciesResult => {
       if (!selectedPolicy) {
         // Try to find the default policy in the current environment's policies
         const defaultPolicy = policies.find(
-          (p) => p.id === DEFAULT_POLICIES[0].id
+          (p) => p.id === DEFAULT_POLICIES[0].id,
         );
 
         // If the default policy exists in this environment, use it
