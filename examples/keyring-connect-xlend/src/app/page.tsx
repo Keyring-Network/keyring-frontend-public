@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useProofData } from "@/hooks/useProofData";
 import { usePolicies } from "@/hooks/usePolicies";
-import type { Policy } from "@/types/keyring";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
@@ -39,7 +38,7 @@ export default function KeyringConnectDemo() {
     if (environment === "dev" || environment === "prod") {
       useEnvironmentStore.getState().setEnvironment(environment);
     } else if (environment !== null) {
-      toast.error("Invalid environment in URL. Keeping the current environment.");
+      toast.error("Invalid environment in URL. Using the default environment (dev).");
     }
     const id = params.get("policyId");
     const policyId = id !== null && /^\d+$/.test(id) && Number.isSafeInteger(Number(id)) && Number(id) > 0
@@ -54,7 +53,7 @@ export default function KeyringConnectDemo() {
 }
 
 function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
-  const { policies } = usePolicies(initialPolicyId);
+  usePolicies(initialPolicyId);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
@@ -64,17 +63,17 @@ function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
   return (
     <KeyringConnectDemoContent
       key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
-      policies={policies}
     />
   );
 }
 
-function KeyringConnectDemoContent({ policies }: { policies: Policy[] }) {
+function KeyringConnectDemoContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
+  const { environment } = useEnvironmentStore();
   const { proofData, isDataSharingSupported } = useProofData(policy.id);
 
   const { status: credentialStatus, error } = useCheckCredential(
@@ -144,6 +143,30 @@ function KeyringConnectDemoContent({ policies }: { policies: Policy[] }) {
 
           <Card className="bg-white rounded-xl shadow-lg overflow-hidden">
             <CardContent className="p-4 pb-0">
+              <dl
+                aria-label="Active verification configuration"
+                className="mb-4 grid gap-3 border-b border-gray-100 pb-4 text-xs"
+              >
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-4 sm:gap-x-6">
+                  <dt className="text-gray-600">Environment</dt>
+                  <dd
+                    className={`justify-self-end rounded px-2 py-1 font-medium ${
+                      environment === "dev"
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {environment.toUpperCase()}
+                  </dd>
+                </div>
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-4 sm:gap-x-6">
+                  <dt className="text-gray-600">Policy</dt>
+                  <dd className="min-w-0 break-words text-right text-sm text-gray-900">
+                    {policy.name}{" "}
+                    <span className="whitespace-nowrap text-gray-600">({policy.id})</span>
+                  </dd>
+                </div>
+              </dl>
               <LendingTabsMock />
               <LendingFormMock activeTab="install" />
 
@@ -178,7 +201,7 @@ function KeyringConnectDemoContent({ policies }: { policies: Policy[] }) {
           )}
         </div>
       </div>
-      <KeyringConnectLinks policies={policies} />
+      <KeyringConnectLinks />
     </div>
   );
 }

@@ -1,21 +1,13 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 type Environment = "dev" | "prod";
 
 interface EnvironmentStore {
   environment: Environment;
-  setEnvironment: (env: Environment) => void;
+  setEnvironment: (environment: Environment) => void;
 }
 
-export const useEnvironmentStore = create<EnvironmentStore>()(
-  persist(
-    (set) => ({
-      environment: "dev",
-      setEnvironment: (environment: Environment) => set({ environment }),
-    }),
-    {
-      name: "keyring-environment-storage",
-    }
-  )
-);
+export const useEnvironmentStore = create<EnvironmentStore>((set) => ({
+  environment: "dev",
+  setEnvironment: (environment) => set({ environment }),
+}));
