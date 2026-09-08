@@ -3,6 +3,7 @@ import { KeyringConnect } from "@keyringnetwork/keyring-connect-sdk";
 import {
   ProofData,
   ProofDataExtensionState,
+  supportsDataSharing,
   validProofData,
 } from "@/lib/proofData";
 
@@ -14,14 +15,16 @@ import {
  * for the current launch session, and clears it on every new launch. This hook
  * adds the policy check on top and otherwise passes the extension state through.
  */
-export const useProofData = (policyId: number): ProofData | null => {
+export const useProofData = (policyId: number) => {
   const [proofData, setProofData] = useState<ProofData | null>(null);
+  const [isDataSharingSupported, setIsDataSharingSupported] = useState(false);
 
   useEffect(() => {
     let active = true;
     const unsubscribe = KeyringConnect.subscribeToExtensionState(
       (state: ProofDataExtensionState | null) => {
         if (!active) return;
+        setIsDataSharingSupported(supportsDataSharing(state?.manifest?.version));
         const proof = state?.proofData;
         setProofData(validProofData(proof, policyId) ? proof : null);
       },
@@ -33,5 +36,5 @@ export const useProofData = (policyId: number): ProofData | null => {
     };
   }, [policyId]);
 
-  return proofData;
+  return { proofData, isDataSharingSupported };
 };

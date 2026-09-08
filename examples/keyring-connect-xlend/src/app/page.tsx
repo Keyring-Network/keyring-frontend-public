@@ -47,7 +47,7 @@ function KeyringConnectDemoContent() {
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
-  const proofData = useProofData(policy.id);
+  const { proofData, isDataSharingSupported } = useProofData(policy.id);
 
   const { status: credentialStatus, error } = useCheckCredential(
     policy.onchain_id,
@@ -142,7 +142,7 @@ function KeyringConnectDemoContent() {
             </CardContent>
           </Card>
 
-          {["nonce_only", "broad"].includes(policy.data_sharing_access_mode) && (
+          {isDataSharingSupported && ["nonce_only", "broad"].includes(policy.data_sharing_access_mode) && (
             <SharedDataPanel
               key={proofData?.nonce ?? ""}
               proofData={proofData}
