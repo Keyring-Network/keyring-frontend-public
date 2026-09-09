@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   PaginatedResponseSchema_PolicySchema,
@@ -13,6 +13,7 @@ import { usePolicyStore } from "./store/usePolicyStore";
 type UsePoliciesResult = {
   policies: Policy[];
   isLoading: boolean;
+  isPolicyResolved: boolean;
   error: Error | null;
   refetch: () => void;
 };
@@ -25,6 +26,7 @@ const getPolicies = async (env: "prod" | "dev") => {
   const response = await fetch(
     `${env === "prod" ? prodUrl : devUrl}/api/v1/policies/public`,
   );
+  if (!response.ok) throw new Error("Unable to load policies.");
   return (await response.json()) as PaginatedResponseSchema_PolicySchema;
 };
 
@@ -32,6 +34,7 @@ export const usePolicies = (initialPolicyId?: number): UsePoliciesResult => {
   const { environment } = useEnvironmentStore();
   const { policy, setPolicy } = usePolicyStore();
   const pendingPolicyId = useRef(initialPolicyId);
+  const [isPolicyResolved, setIsPolicyResolved] = useState(initialPolicyId === undefined);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["policies", environment],
@@ -63,6 +66,8 @@ export const usePolicies = (initialPolicyId?: number): UsePoliciesResult => {
       const selected = requested ?? fallback;
       pendingPolicyId.current = undefined;
       setPolicy(selected);
+      // Publish resolution only after the requested policy or validated fallback is active.
+      setIsPolicyResolved(true);
       return;
     }
 
@@ -109,7 +114,8 @@ export const usePolicies = (initialPolicyId?: number): UsePoliciesResult => {
   return {
     policies,
     isLoading,
-    error,
+    isPolicyResolved,
+    error: error ?? (data && policies.length === 0 ? new Error("No policies available.") : null),
     refetch,
   };
 };

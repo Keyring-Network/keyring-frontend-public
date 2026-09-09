@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useProofData } from "@/hooks/useProofData";
 import { usePolicies } from "@/hooks/usePolicies";
-import type { Policy } from "@/types/keyring";
 import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
@@ -39,7 +38,7 @@ export default function KeyringConnectDemo() {
     if (environment === "dev" || environment === "prod") {
       useEnvironmentStore.getState().setEnvironment(environment);
     } else if (environment !== null) {
-      toast.error("Invalid environment in URL. Keeping the current environment.");
+      toast.error("Invalid environment in URL. Using the default environment (dev).");
     }
     const id = params.get("policyId");
     const policyId = id !== null && /^\d+$/.test(id) && Number.isSafeInteger(Number(id)) && Number(id) > 0
@@ -54,7 +53,7 @@ export default function KeyringConnectDemo() {
 }
 
 function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
-  const { policies } = usePolicies(initialPolicyId);
+  const { isPolicyResolved, error: policyError } = usePolicies(initialPolicyId);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
@@ -62,14 +61,19 @@ function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
 
   // Reset local demo state when the verification context changes.
   return (
-    <KeyringConnectDemoContent
-      key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
-      policies={policies}
-    />
+    <>
+      <KeyringConnectDemoContent
+        key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
+      />
+      <KeyringConnectLinks
+        isPolicyResolved={isPolicyResolved}
+        hasPolicyError={!!policyError}
+      />
+    </>
   );
 }
 
-function KeyringConnectDemoContent({ policies }: { policies: Policy[] }) {
+function KeyringConnectDemoContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
@@ -178,7 +182,6 @@ function KeyringConnectDemoContent({ policies }: { policies: Policy[] }) {
           )}
         </div>
       </div>
-      <KeyringConnectLinks policies={policies} />
     </div>
   );
 }

@@ -5,29 +5,23 @@ import {
   BookOpen,
   Database,
   X,
-  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { usePolicyStore } from "@/hooks/store/usePolicyStore";
-import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
-import type { Policy } from "@/types/keyring";
 import { DATA_SHARING_DOCS_URL } from "@/config";
+import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
+import { usePolicyStore } from "@/hooks/store/usePolicyStore";
 
-export const KeyringConnectLinks = ({ policies }: { policies: Policy[] }) => {
+export const KeyringConnectLinks = ({
+  isPolicyResolved,
+  hasPolicyError,
+}: {
+  isPolicyResolved: boolean;
+  hasPolicyError: boolean;
+}) => {
   const [isVisible, setIsVisible] = useState(false);
-  const { policy, setPolicy } = usePolicyStore();
-  const { environment, setEnvironment } = useEnvironmentStore();
-
-  const selectedPolicy = policies.find((p) => p.id === policy.id);
-
+  const { environment } = useEnvironmentStore();
+  const { policy } = usePolicyStore();
   if (!isVisible) {
     return (
       <div className="fixed bottom-4 left-4 z-50 xl:block">
@@ -35,6 +29,7 @@ export const KeyringConnectLinks = ({ policies }: { policies: Policy[] }) => {
           size="sm"
           variant="ghost"
           className="w-10 h-10 p-0 bg-teal text-firefly rounded-full border border-blue-100 shadow-lg hover:bg-teal/60 hover:border-teal"
+          aria-label="Open developer resources"
           onClick={() => setIsVisible(true)}
         >
           <Code2 className="w-4 h-4" />
@@ -58,6 +53,7 @@ export const KeyringConnectLinks = ({ policies }: { policies: Policy[] }) => {
             size="sm"
             variant="ghost"
             className="w-6 h-6 p-0 text-white/50 hover:bg-white"
+            aria-label="Close developer resources"
             onClick={() => setIsVisible(false)}
           >
             <X className="w-4 h-4" />
@@ -109,58 +105,30 @@ export const KeyringConnectLinks = ({ policies }: { policies: Policy[] }) => {
             <span className="flex-1 text-left">Data Sharing Docs</span>
             <ExternalLink className="w-3 h-3" />
           </Button>
-
-          <div className="mt-2">
-            <p className="text-xs text-white/70 mb-1 mt-4">Environment</p>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="w-full items-center p-2 justify-between flex gap-2 h-8 text-xs text-white hover:text-firefly hover:bg-firefly-100 rounded-md">
-                {environment.toUpperCase()}
-                <ChevronRight className="w-3 h-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Select Environment</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setEnvironment("dev")}>
-                  DEV
-                  {environment === "dev" ? (
-                    <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
-                  ) : null}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setEnvironment("prod")}>
-                  PROD
-                  {environment === "prod" ? (
-                    <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
-                  ) : null}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="mt-2">
-            <p className="text-xs text-white/70 mb-1 mt-4">
-              Active Test Policy
-            </p>
-            <DropdownMenu>
-              <DropdownMenuTrigger className="w-full items-center p-2 justify-between flex gap-2 h-8 text-xs text-white hover:text-firefly hover:bg-firefly-100 rounded-md">
-                {selectedPolicy?.name || "Select Policy"}
-                <ChevronRight className="w-3 h-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Select Policy</DropdownMenuLabel>
-                {policies.map((policy) => (
-                  <DropdownMenuItem
-                    key={policy.id}
-                    onClick={() => setPolicy(policy)}
-                  >
-                    {policy.name}
-                    {selectedPolicy?.id === policy.id ? (
-                      <div className="w-2 h-2 ml-4 bg-teal rounded-full" />
-                    ) : null}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
+
+        <dl aria-label="Active verification configuration" className="mt-4 space-y-4 text-xs">
+          <div>
+            <dt className="mb-1 text-white/70">Environment</dt>
+            <dd className="p-2">{environment.toUpperCase()}</dd>
+          </div>
+          <div>
+            <dt className="mb-1 text-white/70">Active Policy</dt>
+            <dd
+              aria-live="polite"
+              aria-busy={!isPolicyResolved && !hasPolicyError}
+              className="break-words p-2"
+            >
+              {isPolicyResolved ? (
+                <>{policy.name} ({policy.id})</>
+              ) : (
+                <span className="text-white/70">
+                  {hasPolicyError ? "Unable to load policy" : "Loading policy…"}
+                </span>
+              )}
+            </dd>
+          </div>
+        </dl>
       </div>
     </div>
   );

@@ -32,6 +32,14 @@ bun install && bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Environment and policy
+
+Set the verification environment and policy through the URL, for example
+`http://localhost:3000/?environment=prod&policyId=7`. The environment accepts
+`dev` or `prod`; `policyId` is the public policy's `id`.
+
+The active environment and policy name and ID appear as read-only values in the developer resources widget. An invalid environment shows an error notification and falls back to `dev`. An unavailable policy falls back to the default or first available policy.
+
 ## Keyring Connect E2E Flow
 
 The Keyring Connect flow integrates identity verification into DeFi applications. This document outlines the complete user journey through the Keyring Connect onboardings process including the ZKP generation and on-chain broadcast, from wallet connection to credential validation.
