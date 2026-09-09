@@ -38,7 +38,7 @@ Set the verification environment and policy through the URL, for example
 `http://localhost:3000/?environment=prod&policyId=7`. The environment accepts
 `dev` or `prod`; `policyId` is the public policy's `id`.
 
-The active environment and policy ID appear above the Lend/Borrow tabs. An invalid environment shows an error notification and falls back to `dev`. An unavailable policy falls back to the default or first available policy.
+The active environment and policy name and ID appear as read-only values in the developer resources widget. An invalid environment shows an error notification and falls back to `dev`. An unavailable policy falls back to the default or first available policy.
 
 ## Keyring Connect E2E Flow
 

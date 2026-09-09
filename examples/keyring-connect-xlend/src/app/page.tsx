@@ -61,27 +61,24 @@ function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
 
   // Reset local demo state when the verification context changes.
   return (
-    <KeyringConnectDemoContent
-      key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
-      isPolicyResolved={isPolicyResolved}
-      hasPolicyError={!!policyError}
-    />
+    <>
+      <KeyringConnectDemoContent
+        key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
+      />
+      <KeyringConnectLinks
+        isPolicyResolved={isPolicyResolved}
+        hasPolicyError={!!policyError}
+      />
+    </>
   );
 }
 
-function KeyringConnectDemoContent({
-  isPolicyResolved,
-  hasPolicyError,
-}: {
-  isPolicyResolved: boolean;
-  hasPolicyError: boolean;
-}) {
+function KeyringConnectDemoContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
-  const { environment } = useEnvironmentStore();
   const { proofData, isDataSharingSupported } = useProofData(policy.id);
 
   const { status: credentialStatus, error } = useCheckCredential(
@@ -151,42 +148,6 @@ function KeyringConnectDemoContent({
 
           <Card className="bg-white rounded-xl shadow-lg overflow-hidden">
             <CardContent className="p-4 pb-0">
-              <dl
-                aria-label="Active verification configuration"
-                className="mb-4 grid gap-3 border-b border-gray-100 pb-4 text-xs"
-              >
-                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-4 sm:gap-x-6">
-                  <dt className="text-gray-600">Environment</dt>
-                  <dd
-                    className={`justify-self-end rounded px-2 py-1 font-medium ${
-                      environment === "dev"
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {environment.toUpperCase()}
-                  </dd>
-                </div>
-                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-4 sm:gap-x-6">
-                  <dt className="text-gray-600">Policy</dt>
-                  <dd
-                    aria-live="polite"
-                    aria-busy={!isPolicyResolved && !hasPolicyError}
-                    className="min-w-0 break-words text-right text-sm text-gray-900"
-                  >
-                    {isPolicyResolved ? (
-                      <>
-                        {policy.name}{" "}
-                        <span className="whitespace-nowrap text-gray-600">({policy.id})</span>
-                      </>
-                    ) : (
-                      <span className="text-gray-600">
-                        {hasPolicyError ? "Unable to load policy" : "Loading policy…"}
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
               <LendingTabsMock />
               <LendingFormMock activeTab="install" />
 
@@ -221,7 +182,6 @@ function KeyringConnectDemoContent({
           )}
         </div>
       </div>
-      <KeyringConnectLinks />
     </div>
   );
 }
