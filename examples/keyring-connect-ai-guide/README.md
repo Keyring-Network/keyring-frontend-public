@@ -42,7 +42,9 @@ Read `AGENTS.md` at `[/path/to/keyring-frontend-public/examples/keyring-connect-
 
 | Decision | Value |
 |----------|-------|
-| Policy ID | [YOUR_POLICY_ID] |
+| Backend policy ID (`policy.id`) | [YOUR_BACKEND_POLICY_ID] |
+| On-chain policy ID (`policy.onchain_id`) | [YOUR_ONCHAIN_POLICY_ID] |
+| Environment | [prod / dev; use matching policies, contracts, and extension endpoints] |
 | Chain ID | [YOUR_CHAIN_ID, e.g. 1 for Ethereum, 42161 for Arbitrum] |
 | Target chains | [EVM only / Solana only / both] |
 | UI pattern | [Variant A (Module Card) / Variant B (CTA Cycling) / Variant C (Custom in-context card)] |
@@ -53,9 +55,9 @@ Read `AGENTS.md` at `[/path/to/keyring-frontend-public/examples/keyring-connect-
 1. Install: `pnpm add @keyringnetwork/keyring-connect-sdk wagmi viem @tanstack/react-query lucide-react clsx tailwind-merge`
 2. Set up WagmiProvider + QueryClientProvider
 3. Copy `keyring-types.ts`, `keyring-utils.ts`, and the components I need. Merge `theme.extend.colors.keyring` from the reference `tailwind.config.ts`, include the copied files in Tailwind content paths, enable Tailwind CSS, and copy `public/images/keyring/` to my public assets. Configure `@/` imports or convert them to relative paths. Use my app’s existing font.
-4. Read credential: `entityExp(policyId, address)` -> `deriveKeyringCredentialStatus()`
-5. Subscribe to extension: `KeyringConnect.subscribeToExtensionState()` with trader/chain/policy validation
-6. Launch extension: `KeyringConnect.launchExtension(config)`
+4. Read credential: `entityExp(onchainPolicyId, address)` -> `deriveKeyringCredentialStatus()`
+5. Subscribe to extension: `KeyringConnect.subscribeToExtensionState()` with wallet, chain, on-chain policy ID, and expiry validation
+6. Launch extension: `KeyringConnect.launchExtension(config)` with the backend policy ID as `policy_id`; for dev, configure the matching `krn_config` endpoints as shown in `AGENTS.md`
 7. Submit credential: `createCredential(...)` with `value: cost`
 8. Gate CTA behind `status.state === "keyring:valid"`
 9. Handle refresh flow for expired credentials

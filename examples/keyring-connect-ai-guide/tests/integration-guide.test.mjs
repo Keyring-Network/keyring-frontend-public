@@ -27,9 +27,9 @@ function harness(cached) {
   };
   const setFlow = (next) => { flow = typeof next === 'function' ? next(flow) : next; };
   const render = (address = '0xabc', chain = 1, policy = 7) => {
-    new Function('useEffect', 'KeyringConnect', 'address', 'activeChainId', 'POLICY_ID',
+    new Function('useEffect', 'KeyringConnect', 'address', 'activeChainId', 'KEYRING_CONFIG',
       'setCredentialData', 'setFlowState', 'setExtensionInstalled', subscription)(
-      useEffect, sdk, address, chain, policy, value => { data = value; }, setFlow, () => {});
+      useEffect, sdk, address, chain, { onchainPolicyId: policy, backendPolicyId: 99, env: 'prod' }, value => { data = value; }, setFlow, () => {});
   };
   return { render, emit: value => callback({ credentialData: value }), setFlow,
     get data() { return data; }, get flow() { return flow; },
@@ -82,12 +82,28 @@ test('launch revalidates cached data at click time', () => {
     let flow, launched = false, cleared = false;
     new Function('credentialData', 'userAddress', 'chainId', 'KEYRING_CONFIG',
       'setFlowState', 'setCredentialData', 'KeyringConnect', 'window', launch)(
-      { ...credential, ...patch }, '0xabc', 1, { policyId: 7 },
+      { ...credential, ...patch }, '0xabc', 1, { onchainPolicyId: 7, backendPolicyId: 99, env: 'prod' },
       value => { flow = value; }, value => { cleared = value === null; },
-      { launchExtension: () => { launched = true; return Promise.resolve(); } },
+      { launchExtension: config => { assert.equal(config.policy_id, 99); assert.equal(config.krn_config, undefined); launched = true; return Promise.resolve(); } },
       { location: { origin: 'https://example.test' } });
     assert.equal(launched, patch !== null);
     assert.equal(cleared, patch !== null);
     assert.equal(flow, patch === null ? 'calldata-ready' : 'progress');
   }
+});
+
+
+test('development launch selects development services with the backend ID', () => {
+  let config;
+  new Function('credentialData', 'userAddress', 'chainId', 'KEYRING_CONFIG',
+    'setFlowState', 'setCredentialData', 'KeyringConnect', 'window', launch)(
+    null, '0xabc', 1, { onchainPolicyId: 7, backendPolicyId: 99, env: 'dev' },
+    () => {}, () => {},
+    { launchExtension: value => { config = value; return Promise.resolve(); } },
+    { location: { origin: 'https://example.test' } });
+  assert.equal(config.policy_id, 99);
+  assert.deepEqual(config.krn_config, {
+    keyring_api_url: 'https://main.api.keyring-backend.krndev.net',
+    keyring_user_app_url: 'https://app.keyringdev.network',
+  });
 });
