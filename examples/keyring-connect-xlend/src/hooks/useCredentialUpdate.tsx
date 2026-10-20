@@ -2,6 +2,7 @@ import { useCredentialUpdateEvm } from "./useCredentialUpdateEvm";
 import { useCredentialUpdateSolana } from "./useCredentialUpdateSolana";
 import { CredentialData } from "@keyringnetwork/keyring-connect-sdk";
 import { useAppKitNetwork } from "@reown/appkit/react";
+import { getSimulationErrorMessage } from "@/utils/simulationError";
 
 interface CredentialUpdateProps {
   calldata: CredentialData;
@@ -37,6 +38,9 @@ export const useCredentialUpdate = ({
   });
 
   const isSolanaConnected = caipNetworkId?.startsWith("solana");
+  const simulationError = isSolanaConnected
+    ? solanaSimulationError
+    : evmSimulationError;
 
   return {
     writeWithWallet: isSolanaConnected
@@ -45,9 +49,13 @@ export const useCredentialUpdate = ({
     isWalletUpdating: isSolanaConnected
       ? isSolanaWalletUpdating
       : isEvmWalletUpdating,
-    simulationError: isSolanaConnected
-      ? solanaSimulationError
-      : evmSimulationError,
+    simulationError: simulationError
+      ? getSimulationErrorMessage(simulationError)
+      : null,
+    simulationErrorDetails:
+      simulationError instanceof Error
+        ? simulationError.message
+        : simulationError,
     refetchSimulation: isSolanaConnected
       ? refetchSolanaSimulation
       : refetchEvmSimulation,

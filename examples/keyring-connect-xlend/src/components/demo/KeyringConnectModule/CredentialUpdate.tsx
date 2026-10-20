@@ -14,17 +14,22 @@ export const CredentialUpdate = ({
 }: CredentialUpdateProps) => {
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
-  const { writeWithWallet, refetchSimulation, isSimulating, simulationError } =
-    useCredentialUpdate({
-      calldata,
-      onTransactionPending,
-    });
+  const {
+    writeWithWallet,
+    refetchSimulation,
+    isSimulating,
+    simulationError,
+    simulationErrorDetails,
+  } = useCredentialUpdate({
+    calldata,
+    onTransactionPending,
+  });
 
   const buttonText = simulationError
     ? "Retry simulation"
     : isSimulating
-    ? "Simulating transaction..."
-    : "Update credential";
+      ? "Simulating transaction..."
+      : "Update credential";
 
   return (
     <>
@@ -36,18 +41,22 @@ export const CredentialUpdate = ({
         {buttonText}
       </Button>
       {simulationError && (
-        <div className="mt-3 ">
+        <div className="mt-3">
+          <p role="alert" className="text-red-500 text-sm">
+            {simulationError}
+          </p>
           <button
-            className="text-red-500 text-xs underline cursor-pointer hover:text-red-600"
+            className="mt-2 text-red-500 text-xs underline cursor-pointer hover:text-red-600"
+            aria-expanded={showErrorDetails}
             onClick={() => setShowErrorDetails(!showErrorDetails)}
           >
             {showErrorDetails
-              ? "Hide error"
-              : "Show transaction simulation error details"}
+              ? "Hide technical details"
+              : "Show technical details"}
           </button>
           {showErrorDetails && (
-            <div className="mt-2 text-red-500 text-xs max-w-sm max-h-32 overflow-y-auto border border-red-200 p-2 rounded bg-red-50">
-              <p>Simulation Error: {simulationError}</p>
+            <div className="mt-2 text-red-500 text-xs max-w-[470px] max-h-32 overflow-y-auto whitespace-pre-wrap break-words border border-red-200 p-2 rounded bg-red-50">
+              <p>{simulationErrorDetails}</p>
             </div>
           )}
         </div>

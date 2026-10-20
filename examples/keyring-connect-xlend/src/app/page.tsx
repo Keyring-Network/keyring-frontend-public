@@ -6,12 +6,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LendingTabsMock } from "@/components/demo/XLendAppInterface/LendingTabsMock";
 import { CtaMock } from "@/components/demo/XLendAppInterface/CtaMock";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useProofData } from "@/hooks/useProofData";
+import { usePolicies } from "@/hooks/usePolicies";
+import type { Policy } from "@/types/keyring";
+import { useEnvironmentStore } from "@/hooks/store/useEnvironmentStore";
 import { useCheckCredential } from "@/hooks/useCheckCredential";
 import { VerificationBadge } from "@/components/demo/KeyringConnectModule/VerificationBadge";
 import { KeyringConnectModule } from "@/components/demo/KeyringConnectModule";
 import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import { KeyringConnectLinks } from "@/components/demo/KeyringConnectModule/KeyringConnectLinks";
 import { usePolicyStore } from "@/hooks/store/usePolicyStore";
+import { SharedDataPanel } from "@/components/demo/SharedDataPanel";
 
 export type FlowState =
   | "loading"
@@ -25,14 +31,54 @@ export type FlowState =
   | "valid";
 
 export default function KeyringConnectDemo() {
+  const [initialSelection, setInitialSelection] = useState<{ policyId?: number } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const environment = params.get("environment");
+    if (environment === "dev" || environment === "prod") {
+      useEnvironmentStore.getState().setEnvironment(environment);
+    } else if (environment !== null) {
+      toast.error("Invalid environment in URL. Keeping the current environment.");
+    }
+    const id = params.get("policyId");
+    const policyId = id !== null && /^\d+$/.test(id) && Number.isSafeInteger(Number(id)) && Number(id) > 0
+      ? Number(id)
+      : NaN;
+    setInitialSelection({ policyId: id === null ? undefined : policyId });
+  }, []);
+
+  // Apply the URL environment before mounting the policy query.
+  if (!initialSelection) return <AppHeader />;
+  return <KeyringConnectPage initialPolicyId={initialSelection.policyId} />;
+}
+
+function KeyringConnectPage({ initialPolicyId }: { initialPolicyId?: number }) {
+  const { policies } = usePolicies(initialPolicyId);
+  const { address } = useAppKitAccount();
+  const { caipNetworkId } = useAppKitNetwork();
+  const { policy } = usePolicyStore();
+  const { environment } = useEnvironmentStore();
+
+  // Reset local demo state when the verification context changes.
+  return (
+    <KeyringConnectDemoContent
+      key={`${address}:${caipNetworkId}:${policy.id}:${environment}`}
+      policies={policies}
+    />
+  );
+}
+
+function KeyringConnectDemoContent({ policies }: { policies: Policy[] }) {
   const [isMounted, setIsMounted] = useState(false);
   const [flowState, setFlowState] = useState<FlowState | null>(null);
   const { address } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { policy } = usePolicyStore();
+  const { proofData, isDataSharingSupported } = useProofData(policy.id);
 
   const { status: credentialStatus, error } = useCheckCredential(
-    policy.onchain_id
+    policy.onchain_id,
   );
 
   // Update flow state based on credential status
@@ -87,7 +133,7 @@ export default function KeyringConnectDemo() {
   }
 
   return (
-    <div className="bg-blue-100/50 h-full">
+    <div className="bg-blue-100/50 min-h-dvh">
       <AppHeader />
       <div className="flex justify-center items-center py-8 px-4">
         <div className="w-full max-w-xl">
@@ -123,9 +169,16 @@ export default function KeyringConnectDemo() {
               )}
             </CardContent>
           </Card>
+
+          {isDataSharingSupported && ["nonce_only", "broad"].includes(policy.data_sharing_access_mode) && (
+            <SharedDataPanel
+              key={proofData?.nonce ?? ""}
+              proofData={proofData}
+            />
+          )}
         </div>
       </div>
-      <KeyringConnectLinks />
+      <KeyringConnectLinks policies={policies} />
     </div>
   );
 }

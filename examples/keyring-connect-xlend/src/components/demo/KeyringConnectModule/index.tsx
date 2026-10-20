@@ -68,12 +68,14 @@ export function KeyringConnectModule({
       // This is needed because we switch between dev and prod environments
       return baseValidation && credentialData.key === policy.public_key?.n;
     },
-    [address, policyId, chainId, policy]
+    [address, policyId, chainId, policy],
   );
 
   // Subscribe to the extension state changes
   useEffect(() => {
+    let active = true;
     const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
+      if (!active) return;
       if (!state) {
         setFlowState("install");
         return;
@@ -90,7 +92,10 @@ export function KeyringConnectModule({
       }
     });
 
-    return unsubscribe; // Cleanup on unmount
+    return () => {
+      active = false;
+      unsubscribe();
+    };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validCredentialData, flowState, environment]);
@@ -111,8 +116,8 @@ export function KeyringConnectModule({
       if (!supportedChainIds?.includes(chainId)) {
         window.alert(
           `This policy is not supported for this chain. Please select a different policy. Supported chains: ${supportedChainIds?.join(
-            ", "
-          )}. Current chain: ${chainId}`
+            ", ",
+          )}. Current chain: ${chainId}`,
         );
         return;
       }
@@ -123,7 +128,9 @@ export function KeyringConnectModule({
         app_url: window.location.origin,
         name: "xLend",
         logo_url: `${window.location.origin}/xlend-icon.svg`,
-        policy_id: policyId,
+        // Extension/API requests use the backend ID; credential validation above
+        // uses the separately supplied on-chain policy ID.
+        policy_id: policy.id,
         credential_config: {
           chain_id: chainId as KrnSupportedChainId,
           wallet_address: address,
@@ -132,7 +139,9 @@ export function KeyringConnectModule({
         krn_config:
           environment === "dev"
             ? {
-                keyring_api_url: "https://main.api.keyring-backend.krndev.net",
+                keyring_api_url:
+                  process.env.NEXT_PUBLIC_KEYRING_API_BASE_URL ??
+                  "https://main.api.keyring-backend.krndev.net",
                 keyring_user_app_url: "https://app.keyringdev.network",
               }
             : undefined,

@@ -26,7 +26,7 @@ interface CredentialUpdateResponse {
   writeWithWallet: (() => void) | undefined;
   isWalletUpdating: boolean;
   isSimulating: boolean;
-  simulationError: string | null;
+  simulationError: Error | null;
   refetchSimulation: () => void;
 }
 
@@ -37,7 +37,7 @@ export const useCredentialUpdateEvm = ({
 }: CredentialUpdateProps): CredentialUpdateResponse => {
   const [hash, setHash] = useState<`0x${string}`>();
   const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationError, setSimulationError] = useState<string | null>(null);
+  const [simulationError, setSimulationError] = useState<Error | null>(null);
   const [pendingToastId, setPendingToastId] = useState<string | number | null>(
     null
   );
@@ -136,7 +136,7 @@ export const useCredentialUpdateEvm = ({
     ) {
       setIsSimulating(false);
       if (simulateContractError) {
-        setSimulationError(simulateContractError?.message || null);
+        setSimulationError(simulateContractError);
         console.error(simulateContractError);
       }
     }
