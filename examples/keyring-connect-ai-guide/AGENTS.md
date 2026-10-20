@@ -2,7 +2,7 @@
 
 > Structured for AI coding assistants. Front-loads types, patterns, and code. Conceptual sections follow.
 
-**What Keyring Connect is:** A privacy-preserving KYC verification system for DeFi. It gates dApp actions behind on-chain compliance credentials. Users verify via a Chrome extension (TLSN-Proof against KYC sources like Binance), then a credential is created on-chain with a ~24h TTL. No identity data is exposed to the dApp. The integrator needs the **backend policy ID** (`policy.id`) and **on-chain policy ID** (`policy.onchain_id`) for the selected environment from [Keyring Network](https://keyring.network). They can differ: use the backend ID for `launchExtension.policy_id`; use the on-chain ID for `credentialData.policyId`, `entityExp`, and `checkCredential`. Never infer one from the other.
+**What Keyring Connect is:** A privacy-preserving KYC verification system for DeFi. It gates dApp actions behind on-chain compliance credentials. Users verify via a Chrome extension (TLSN-Proof against KYC sources like Binance), then a credential is created on-chain with a ~24h TTL. No identity data is exposed to the dApp. The integrator needs the **on-chain policy ID** (`policy.onchain_id`) for the selected environment from [Keyring Network](https://keyring.network). Use this same ID for extension launch, credential validation, and contract calls. The SDK field is named `policy_id`; the extension resolves the policy internally.
 
 **Sources for integration:**
 
@@ -106,14 +106,13 @@ function App({ children }) {
 
 ## 4. On-Chain Credential Read
 
-Use `entityExp(onchainPolicyId, wallet)` on the Keyring contract. Define the
+Use `entityExp(policyId, wallet)` on the Keyring contract. Define the
 shared configuration before using any of the following snippets (replace the
-placeholders with the pair provided for your environment):
+placeholders with the configuration provided for your environment):
 
 ```typescript
 const KEYRING_CONFIG = {
-  backendPolicyId: YOUR_BACKEND_POLICY_ID, // policy.id: extension/API requests
-  onchainPolicyId: YOUR_ONCHAIN_POLICY_ID, // policy.onchain_id: contract calls
+  policyId: YOUR_ONCHAIN_POLICY_ID, // policy.onchain_id: contract calls
   env: "prod" as "prod" | "dev",
   appName: "Your dApp",
   logoUrl: "https://yourdapp.com/logo.svg",
@@ -133,7 +132,7 @@ const { data: entityExp } = useReadContract({
   address: contractAddress as `0x${string}`,
   abi: ABI ?? [],
   functionName: "entityExp",
-  args: [KEYRING_CONFIG.onchainPolicyId, userAddress],
+  args: [KEYRING_CONFIG.policyId, userAddress],
 });
 
 const status = deriveKeyringCredentialStatus(entityExp ?? 0n);
@@ -171,7 +170,7 @@ useEffect(() => {
     // Validate returned data matches current context
     if (credentialData.trader.toLowerCase() !== address.toLowerCase()) return;
     if (credentialData.chainId !== activeChainId) return;
-    if (credentialData.policyId !== KEYRING_CONFIG.onchainPolicyId) return;
+    if (credentialData.policyId !== KEYRING_CONFIG.policyId) return;
     if (!Number.isFinite(credentialData.validUntil) ||
         credentialData.validUntil <= Math.floor(Date.now() / 1000)) return;
 
@@ -184,7 +183,7 @@ useEffect(() => {
   });
 
   return () => unsubscribe();
-}, [address, activeChainId, KEYRING_CONFIG.onchainPolicyId, KEYRING_CONFIG.backendPolicyId, KEYRING_CONFIG.env]);
+}, [address, activeChainId, KEYRING_CONFIG.policyId, KEYRING_CONFIG.env]);
 ```
 
 **Key behaviors:**
@@ -196,9 +195,10 @@ useEffect(() => {
 
 ## 6. Configuration + Launch Extension
 
-Use the shared `KEYRING_CONFIG` from section 4. The backend ID selects the
-extension policy; the on-chain ID validates its returned credential. Changing
-environment also invalidates cached data and restarts the subscription.
+Use the shared `KEYRING_CONFIG` from section 4. Pass its on-chain `policyId`
+to the SDK's `policy_id` field. The extension resolves the policy and handles
+backend identifiers internally. Changing environment also invalidates cached
+data and restarts the subscription.
 
 ```typescript
 // Launch extension (call when user clicks "Start Verification")
@@ -209,7 +209,7 @@ if (
   credentialData &&
   credentialData.trader.toLowerCase() === userAddress.toLowerCase() &&
   credentialData.chainId === chainId &&
-  credentialData.policyId === KEYRING_CONFIG.onchainPolicyId &&
+  credentialData.policyId === KEYRING_CONFIG.policyId &&
   Number.isFinite(credentialData.validUntil) &&
   credentialData.validUntil > Math.floor(Date.now() / 1000)
 ) {
@@ -223,7 +223,7 @@ KeyringConnect.launchExtension({
   app_url: window.location.origin,
   name: KEYRING_CONFIG.appName,
   logo_url: KEYRING_CONFIG.logoUrl,
-  policy_id: KEYRING_CONFIG.backendPolicyId,
+  policy_id: KEYRING_CONFIG.policyId,
   credential_config: {
     chain_id: chainId,          // e.g., 1 for Ethereum, 42161 for Arbitrum
     wallet_address: userAddress, // connected wallet address
@@ -342,7 +342,7 @@ const handleSubmit = async () => {
     address: keyringContractAddress as `0x${string}`,
     abi: ABI ?? [],
     functionName: "entityExp",
-    args: [KEYRING_CONFIG.onchainPolicyId, wallet],
+    args: [KEYRING_CONFIG.policyId, wallet],
   });
   const status = deriveKeyringCredentialStatus(exp);
   if (status.state !== "keyring:valid") {
@@ -530,7 +530,7 @@ Omit `krn_config` in production so the SDK uses its production defaults. If your
 development deployment uses custom endpoints, supply the matching API and user
 app URLs instead of mixing environments.
 
-Obtain both policy IDs from the selected environment. Clear cached credentials
+Obtain the on-chain policy ID from the selected environment. Clear cached credentials
 when changing environments, and reverify with that environment's policy. For an
 app that switches environments without remounting, also validate the returned
 signing key against the selected policy's public key, as the xLend reference does;
