@@ -128,9 +128,9 @@ export function KeyringConnectModule({
         app_url: window.location.origin,
         name: "xLend",
         logo_url: `${window.location.origin}/xlend-icon.svg`,
-        // Extension/API requests use the backend ID; credential validation above
-        // uses the separately supplied on-chain policy ID.
-        policy_id: policy.id,
+        // The extension resolves the policy from its on-chain ID and handles
+        // backend identifiers internally, matching credential validation above.
+        policy_id: policy.onchain_id,
         credential_config: {
           chain_id: chainId as KrnSupportedChainId,
           wallet_address: address,
