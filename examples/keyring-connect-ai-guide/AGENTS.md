@@ -137,6 +137,9 @@ const status = deriveKeyringCredentialStatus(entityExp ?? 0n);
 
 ```typescript
 useEffect(() => {
+  // Reset before subscribing: the SDK may immediately deliver cached data.
+  setCredentialData(null);
+  setFlowState("loading");
   if (!address) return;
 
   const unsubscribe = KeyringConnect.subscribeToExtensionState((state) => {
@@ -157,27 +160,25 @@ useEffect(() => {
     if (credentialData.trader.toLowerCase() !== address.toLowerCase()) return;
     if (credentialData.chainId !== activeChainId) return;
     if (credentialData.policyId !== POLICY_ID) return;
+    if (!Number.isFinite(credentialData.validUntil) ||
+        credentialData.validUntil <= Math.floor(Date.now() / 1000)) return;
 
     setCredentialData(credentialData);
-    setFlowState("calldata-ready");
+    setFlowState((current) =>
+      current === "valid" || current === "transaction-pending"
+        ? current
+        : "calldata-ready"
+    );
   });
 
   return () => unsubscribe();
-}, [address]);
+}, [address, activeChainId, POLICY_ID]);
 ```
 
 **Key behaviors:**
-- **Credential data takes priority:** If the extension returns valid `credentialData`, always transition to `calldata-ready` — even if the credential-status check is still loading.
-- **Don't auto-transition to `install`/`start`:** Setting `flowState("install")` inside the subscription during Step 0 will cause unwanted UI jumps. Track installation status separately; only surface it when the user clicks "Start Verification."
-- **Wallet change invalidation:** When `address` changes, clear `credentialData` and reset `flowState`. The subscription will re-evaluate with the new address, and mismatched `trader` values will be silently ignored.
-
-```typescript
-// Reset all state when wallet changes
-useEffect(() => {
-  setCredentialData(null);
-  setFlowState("loading");
-}, [address]);
-```
+- **Credential data resumes verification:** Accept only unexpired data for the current wallet, chain, and policy. Resume at `calldata-ready` even while the credential-status read is loading, but never override `valid` or `transaction-pending`.
+- **Don't auto-transition to `install`/`start`:** Track extension installation separately; show those screens only after the user enters verification.
+- **Context invalidation:** Reset cached data and flow state in the same effect, before subscribing, whenever the wallet, active chain, or policy changes. This also avoids a later reset effect erasing an immediate cached callback.
 
 ---
 
@@ -195,12 +196,21 @@ const KEYRING_CONFIG = {
 ```typescript
 // Launch extension (call when user clicks "Start Verification")
 // IMPORTANT: Check for existing credentialData first — re-launching can clear the
-// extension's cached state. If credentialData exists, skip to "calldata-ready".
-if (credentialData) {
+// extension's cached state. Revalidate the cache at click time: it may have
+// expired since the subscription delivered it.
+if (
+  credentialData &&
+  credentialData.trader.toLowerCase() === userAddress.toLowerCase() &&
+  credentialData.chainId === chainId &&
+  credentialData.policyId === KEYRING_CONFIG.policyId &&
+  Number.isFinite(credentialData.validUntil) &&
+  credentialData.validUntil > Math.floor(Date.now() / 1000)
+) {
   setFlowState("calldata-ready");
   return;
 }
 
+setCredentialData(null);
 setFlowState("progress");
 KeyringConnect.launchExtension({
   app_url: window.location.origin,
@@ -222,9 +232,9 @@ KeyringConnect.launchExtension({
 ## 7. Submit createCredential Transaction
 
 ```typescript
-const { writeContract } = useWriteContract();
+const { writeContractAsync } = useWriteContract();
 
-writeContract({
+const hash = await writeContractAsync({
   address: contractAddress as `0x${string}`,
   abi: ABI ?? [],
   functionName: "createCredential",
@@ -249,11 +259,20 @@ writeContract({
 ## 8. Error Handling
 
 ```typescript
-// 1. User rejected transaction
+import { BaseError, UserRejectedRequestError } from "viem";
+
+// 1. User rejected transaction. writeContractAsync returns a promise;
+// writeContract returns void and must instead use mutation callbacks.
 try {
-  await writeContract({ ... });
+  const hash = await writeContractAsync({ /* same request as section 7 */ });
+  setFlowState("transaction-pending");
+  // Track hash with useWaitForTransactionReceipt. Refetch entityExp only after
+  // a successful receipt; handle reverted receipts separately from rejection.
 } catch (e) {
-  if (e.name === "UserRejectedRequestError") {
+  const rejection = e instanceof BaseError
+    ? e.walk((cause) => cause instanceof UserRejectedRequestError)
+    : e;
+  if (rejection instanceof UserRejectedRequestError) {
     setFlowState("calldata-ready"); // Let user retry
     return;
   }
@@ -330,10 +349,10 @@ Copy from `src/components/` in this project:
 | `KeyringVerificationBadge` | `status: KeyringCredentialStatus \| "loading"` | none, valid, expired, loading |
 | `KeyringConnectModuleA` | `step, onAction, onCancel?, isSimulating?, featureName?` | install, start, progress, calldata-ready, refresh |
 | `KeyringConnectModuleB` | `step, onAction, onCancel?` | install, verify, check-status, add-credential |
-| `KeyringConnectModuleC` | `step, onAction, onCancel?` | supply, gate, install, verify, progress, verified, expired |
+| `KeyringConnectModuleC` | `step, onAction, onCancel?` | supply, gate, install, verify, progress, calldata-ready, transaction-pending, verified, expired |
 | `KeyringGatedCTA` | `state, actionLabel?, onClick?` | not-connected, not-verified, verified |
 
-All are `"use client"`, named exports, Tailwind + lucide-react, zero SDK/wallet deps.
+All are `"use client"`, named exports, Tailwind + lucide-react, zero SDK/wallet deps. Follow the README styling and asset setup: copy the `keyring` color theme and public images, enable Tailwind, and configure import aliases. The reusable components do not require Next.js.
 
 ---
 
@@ -355,7 +374,7 @@ All are `"use client"`, named exports, Tailwind + lucide-react, zero SDK/wallet 
 **State priority:** The credential-status effect (on-chain `entityExp`) and the extension subscription can both set `flowState`. When they conflict:
 - `"valid"` always wins -- if the on-chain credential is valid, override everything.
 - Active verification states (`progress`, `install`, `calldata-ready`, `transaction-pending`) must not be overridden by credential-status setting `"loading"` or `"no-credential"`.
-- `credentialData` from the extension subscription always transitions to `"calldata-ready"`, even if credential status is still `"loading"` (e.g., after page refresh).
+- `credentialData` from the extension subscription transitions to `"calldata-ready"` unless already `"valid"` or `"transaction-pending"`, even if credential status is still `"loading"` (e.g., after page refresh).
 
 ---
 
@@ -365,10 +384,10 @@ Conditional paths -- each starts at Step 0 (deposit form visible):
 
 | Condition | Flow |
 |-----------|------|
-| No extension | 0 → gate → install → verify → progress → verified |
-| Extension installed | 0 → gate → progress → verified |
+| No extension | 0 → gate → install → verify → progress → calldata-ready → transaction-pending → verified |
+| Extension installed | 0 → gate → progress → calldata-ready → transaction-pending → verified |
 | Already verified | Verified (persists across refreshes) |
-| Credential expired | 0 (expired badge) → gate → progress → verified |
+| Credential expired | 0 (expired badge) → gate → progress → calldata-ready → transaction-pending → verified |
 
 **Step 0 is always the entry point when credential is missing or expired.**
 The gate view only appears after the user clicks the main CTA ("Supply USDC").
@@ -383,8 +402,8 @@ This is a local UI state, not an SDK state.
 | Install (`install`) | `install` | `launchExtension()` catch | Hidden |
 | Verify (`verify`) | `start` | Extension detected | Hidden |
 | Progress (`progress`) | `progress` | `launchExtension()` called | Hidden |
-| Calldata | `calldata-ready` | Extension returns data | Hidden |
-| Tx Pending | `transaction-pending` | `submitCredential()` called | Hidden |
+| Calldata (`calldata-ready`) | `calldata-ready` | Extension returns data | Hidden |
+| Tx Pending (`transaction-pending`) | `transaction-pending` | `submitCredential()` called | Hidden |
 | Verified (`verified`) | `valid` | On-chain credential confirmed | Visible |
 
 ---
@@ -428,8 +447,8 @@ Your dApp Page
 2. **Step 0 for expired** -- expired credentials start at Step 0 (with "Access Expired" badge), not at the gate. Same progressive disclosure applies.
 3. **Local gate state** -- the transition from Step 0 → Gate is a local UI state (`showGate`), not derived from `KeyringFlowState`. Cancel from gate returns to Step 0.
 4. **Subscription runs continuously** -- the extension caches `credentialData` across page refreshes. The subscription must run at all times to pick up cached data and resume at `calldata-ready`. However, only `credentialData` should trigger flow transitions — don't auto-transition to `install`/`start` during Step 0 (track extension installation status separately).
-5. **Preserve credentialData on cancel** -- when the user cancels from `calldata-ready`, reset the flow state but keep `credentialData`. On re-entry (clicking the main CTA again), check for existing `credentialData` and skip directly to `calldata-ready` instead of re-launching the extension (which may clear the cached data).
-6. **Invalidate on wallet change** -- when the connected wallet address changes, clear `credentialData` and reset flow state to `loading`. The subscription validates `credentialData.trader` against the current address; mismatched data is silently ignored.
+5. **Preserve credentialData on cancel** -- when the user cancels from `calldata-ready`, reset the flow state but keep `credentialData`. On re-entry (clicking the main CTA again), check for unexpired `credentialData` matching the current wallet, chain, and policy and skip directly to `calldata-ready` instead of re-launching the extension (which may clear the cached data).
+6. **Invalidate on context change** -- when the wallet, chain, or policy changes, clear `credentialData` and reset flow state to `loading` before resubscribing. Reject mismatched or expired data, and revalidate cached data before reuse.
 
 ---
 

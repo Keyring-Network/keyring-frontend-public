@@ -52,7 +52,7 @@ Read `AGENTS.md` at `[/path/to/keyring-frontend-public/examples/keyring-connect-
 **Steps:**
 1. Install: `pnpm add @keyringnetwork/keyring-connect-sdk wagmi viem @tanstack/react-query lucide-react clsx tailwind-merge`
 2. Set up WagmiProvider + QueryClientProvider
-3. Copy `keyring-types.ts`, `keyring-utils.ts`, and the components I need
+3. Copy `keyring-types.ts`, `keyring-utils.ts`, and the components I need. Merge `theme.extend.colors.keyring` from the reference `tailwind.config.ts`, include the copied files in Tailwind content paths, enable Tailwind CSS, and copy `public/images/keyring/` to my public assets. Configure `@/` imports or convert them to relative paths. Use my app’s existing font.
 4. Read credential: `entityExp(policyId, address)` -> `deriveKeyringCredentialStatus()`
 5. Subscribe to extension: `KeyringConnect.subscribeToExtensionState()` with trader/chain/policy validation
 6. Launch extension: `KeyringConnect.launchExtension(config)`
@@ -61,3 +61,15 @@ Read `AGENTS.md` at `[/path/to/keyring-frontend-public/examples/keyring-connect-
 9. Handle refresh flow for expired credentials
 10. For production: batch createCredential + main action into one tx
 ````
+
+## Styling and assets when copying components
+
+- These components use Tailwind CSS 3. Merge `theme.extend.colors.keyring` from `tailwind.config.ts` into your app's theme and include the copied files in Tailwind's `content` paths. Keep your existing theme settings. For Tailwind 4, translate these values into equivalent color tokens before use.
+- Copy `public/images/keyring/` into your app's public assets so `/images/keyring/keyring-icon.jpg` and `/images/keyring/keyring-logo-dark.svg` resolve. Adjust the URLs for apps served under a base path.
+- Enable Tailwind's base, components, and utilities layers (see `src/app/globals.css`). Use your app's font, or configure the font variable used by this example's layout.
+- Configure `@/` to point at your source directory, or replace the copied components' aliases with relative imports.
+- The reusable components support plain React and Next.js. The showcase pages and layout use Next.js; do not copy those into a plain React app.
+
+## Checks
+
+Run `pnpm test`, `pnpm lint`, and `pnpm build` from this directory. Tests execute the published subscription/launch snippets and render the credential submission states without Next.js imports.

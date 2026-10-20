@@ -19,6 +19,8 @@ import { cn } from "@/lib/keyring-utils";
  * - "install": Verification flow. CTA = "Install Extension".
  * - "verify":  Verification flow. CTA = "Verify with Keyring".
  * - "progress": Verification flow. Disabled CTA + spinner.
+ * - "calldata-ready": Submit the verified credential on-chain.
+ * - "transaction-pending": Wait for transaction confirmation.
  * - "verified": Deposit form + green "Access Granted" badge.
  * - "expired":  Like "supply" but with "Access Expired" badge.
  */
@@ -28,6 +30,8 @@ export type ModuleCStep =
   | "install"
   | "verify"
   | "progress"
+  | "calldata-ready"
+  | "transaction-pending"
   | "verified"
   | "expired";
 
@@ -168,7 +172,9 @@ export function KeyringConnectModuleC({
   onCancel,
 }: KeyringConnectModuleCProps) {
   const isDepositView = step === "supply" || step === "verified" || step === "expired";
-  const isVerificationView = step === "install" || step === "verify" || step === "progress";
+  const isVerificationView =
+    step === "install" || step === "verify" || step === "progress" ||
+    step === "calldata-ready" || step === "transaction-pending";
   const isGate = step === "gate";
 
   const badgeStatus =
@@ -184,6 +190,8 @@ export function KeyringConnectModuleC({
     install: { label: "Install Extension", disabled: false },
     verify: { label: "Verify with Keyring", disabled: false },
     progress: { label: "Verification In Progress...", disabled: true },
+    "calldata-ready": { label: "Submit Credential", disabled: false },
+    "transaction-pending": { label: "Confirming Transaction...", disabled: true },
     verified: { label: "Supply USDC", disabled: false },
     expired: { label: "Supply USDC", disabled: false },
   };
@@ -195,6 +203,9 @@ export function KeyringConnectModuleC({
       "Open the Keyring Chrome extension and follow the prompts to verify your identity.",
     progress:
       "Complete the verification in the Keyring extension. This page will update automatically.",
+    "calldata-ready": "Submit a transaction to create your on-chain credential.",
+    "transaction-pending":
+      "Waiting for confirmation. Access is granted after the on-chain credential is confirmed.",
   };
 
   const cta = ctaConfig[step];
@@ -238,14 +249,14 @@ export function KeyringConnectModuleC({
               : "bg-keyring-dark text-white hover:bg-keyring-dark/90"
           )}
         >
-          {step === "progress" && (
+          {(step === "progress" || step === "transaction-pending") && (
             <Loader className="h-[18px] w-[18px] animate-spin" />
           )}
           {cta.label}
         </button>
 
-        {/* Cancel button (gate + progress) */}
-        {(isGate || step === "progress") && onCancel && (
+        {/* Cancel button (before submission) */}
+        {(isGate || step === "progress" || step === "calldata-ready") && onCancel && (
           <button
             onClick={onCancel}
             className="flex h-10 w-full items-center justify-center text-sm font-medium text-keyring-muted hover:text-keyring-heading"

@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader } from "lucide-react";
-import Image from "next/image";
 import type { KeyringCredentialStatus } from "@/lib/keyring-types";
 import { cn } from "@/lib/keyring-utils";
 
@@ -58,7 +57,7 @@ export function KeyringVerificationBadge({
         {stateKey === "loading" ? (
           <Loader className="h-2 w-2 animate-spin text-keyring-dark-alt" />
         ) : config.showIcon ? (
-          <Image
+          <img
             src="/images/keyring/keyring-icon.jpg"
             alt="Keyring"
             width={14}

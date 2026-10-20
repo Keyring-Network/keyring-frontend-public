@@ -14,7 +14,9 @@ const stepOptions: { value: ModuleCStep; label: string }[] = [
   { value: "install", label: "1. Install" },
   { value: "verify", label: "2. Verify" },
   { value: "progress", label: "3. In Progress" },
-  { value: "verified", label: "4. Verified" },
+  { value: "calldata-ready", label: "4. Submit Credential" },
+  { value: "transaction-pending", label: "5. Confirming" },
+  { value: "verified", label: "6. Verified" },
   { value: "expired", label: "0. Expired" },
 ];
 
@@ -89,22 +91,22 @@ export default function VariantCPage() {
               {
                 tag: "No extension",
                 tagColor: "bg-amber-100 text-amber-800",
-                flow: "0 \u2192 gate \u2192 1 \u2192 2 \u2192 3 \u2192 4",
+                flow: "0 \u2192 gate \u2192 1 \u2192 2 \u2192 3 \u2192 4 \u2192 5 \u2192 6",
               },
               {
                 tag: "Extension installed",
                 tagColor: "bg-blue-100 text-blue-800",
-                flow: "0 \u2192 gate \u2192 3 \u2192 4",
+                flow: "0 \u2192 gate \u2192 3 \u2192 4 \u2192 5 \u2192 6",
               },
               {
                 tag: "Already verified",
                 tagColor: "bg-green-100 text-green-800",
-                flow: "Step 4 — verified state persists across refreshes",
+                flow: "Step 6 — verified state persists across refreshes",
               },
               {
                 tag: "Credential expired",
                 tagColor: "bg-gray-100 text-gray-700",
-                flow: "0 (expired badge) \u2192 gate \u2192 3 \u2192 4",
+                flow: "0 (expired badge) \u2192 gate \u2192 3 \u2192 4 \u2192 5 \u2192 6",
               },
             ].map((row) => (
               <div key={row.tag} className="flex items-center gap-2">

@@ -139,7 +139,6 @@ export function KeyringConnectModuleA({
           <div className="border-t border-keyring-bg-light" />
           <div className="flex items-center justify-center gap-2">
             <span className="text-xs text-keyring-muted">Provided by</span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/images/keyring/keyring-logo-dark.svg"
               alt="Keyring"
